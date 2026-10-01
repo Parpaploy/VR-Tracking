@@ -63,7 +63,10 @@ service cloud.firestore {
     }
     match /gas/{deviceId} {
       allow read: if activeUser();
-      allow create: if admin() && request.resource.data.status in ['good','minor_damage','major_damage','borrowed'] && !('activeLoanId' in request.resource.data);
+      allow create: if admin()
+        && request.resource.data.status in ['good','minor_damage','major_damage','borrowed']
+        && (!('activeLoanId' in request.resource.data) || request.resource.data.activeLoanId == null)
+        && (!('loanStatus' in request.resource.data) || request.resource.data.loanStatus in ['available','unavailable','borrowed']);
       allow update: if (admin() && (!('activeLoanId' in resource.data) || resource.data.activeLoanId == null) && (!('activeLoanId' in request.resource.data) || request.resource.data.activeLoanId == null))
         || (activeUser() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','loanStatus','activeLoanId','updatedAt']) && get(userPath(request.auth.uid)).data.role == 'user' && (!('activeLoanId' in resource.data) || resource.data.activeLoanId == null)
           && resource.data.status == 'good' && (resource.data.loanStatus == 'available' || !('loanStatus' in resource.data))
