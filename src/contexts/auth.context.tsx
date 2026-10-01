@@ -13,6 +13,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .then((s) => {
         if (s) setSession(s);
       })
+      .catch(() => {
+        // A new project may still deny Firestore reads; keep login/signup reachable.
+        setSession(null);
+      })
       .finally(() => setRestoring(false));
   }, []);
 
@@ -22,7 +26,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(async () => {
     if (session) {
-      await logoutUser(session.id);
+      await logoutUser();
     }
     setSession(null);
   }, [session]);

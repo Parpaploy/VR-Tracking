@@ -1,3 +1,4 @@
+import { VRPhotos } from "../components/vr-photos";
 import { Html5Qrcode, Html5QrcodeScannerState } from "html5-qrcode";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -233,6 +234,7 @@ export default function VRScanPage() {
               </div>
             ) : (
               <>
+                <VRPhotos deviceId={vr.id} photos={vr.photos} />
                 <div className="space-y-3">
                   <div className="flex justify-between items-center border-b pb-2">
                     <span className="text-gray-500">รหัสอุปกรณ์ VR</span>

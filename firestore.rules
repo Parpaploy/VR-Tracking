@@ -1,0 +1,93 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function userPath(uid) { return /databases/$(database)/documents/users/$(uid); }
+    function activeUser() { return signedIn() && exists(userPath(request.auth.uid)) && get(userPath(request.auth.uid)).data.status == 'active'; }
+    function admin() { return activeUser() && get(userPath(request.auth.uid)).data.role == 'admin'; }
+    function imageOk(data) { return data is string && data.matches('^data:image/jpeg;base64,[A-Za-z0-9+/]+=*$') && data.size() <= 700000; }
+
+    match /users/{uid} {
+      allow get: if signedIn() && (request.auth.uid == uid || admin());
+      allow list: if admin();
+      allow create: if (admin() && request.resource.data.keys().hasAll(['name','nickname','studentId','studentEmail','phone','role','status']) && request.resource.data.role in ['user','admin'])
+        || (signedIn() && request.auth.uid == uid && request.resource.data.role == 'user' && request.resource.data.status == 'active'
+          && request.resource.data.keys().hasAll(['name','nickname','studentId','studentEmail','phone','role','status']));
+      allow update: if admin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name','nickname','studentId','studentEmail','phone','role','status','updatedAt']);
+      allow delete: if false;
+    }
+
+    match /registrationStudentIds/{claim} {
+      allow get: if admin() || (signedIn() && (!exists(/databases/$(database)/documents/registrationStudentIds/$(claim)) || resource.data.userId == request.auth.uid));
+      allow list: if admin();
+      allow create: if admin() || (signedIn() && request.resource.data.userId == request.auth.uid && getAfter(userPath(request.auth.uid)).data.role == 'user');
+      allow update, delete: if admin();
+    }
+    match /registrationStudentEmails/{claim} {
+      allow get: if admin() || (signedIn() && (!exists(/databases/$(database)/documents/registrationStudentEmails/$(claim)) || resource.data.userId == request.auth.uid));
+      allow list: if admin();
+      allow create: if admin() || (signedIn() && request.resource.data.userId == request.auth.uid && getAfter(userPath(request.auth.uid)).data.role == 'user');
+      allow update, delete: if admin();
+    }
+    match /registrationPhones/{claim} {
+      allow get: if admin() || (signedIn() && (!exists(/databases/$(database)/documents/registrationPhones/$(claim)) || resource.data.userId == request.auth.uid));
+      allow list: if admin();
+      allow create: if admin() || (signedIn() && request.resource.data.userId == request.auth.uid && getAfter(userPath(request.auth.uid)).data.role == 'user');
+      allow update, delete: if admin();
+    }
+
+    match /registrationDocuments/{uid} {
+      allow read: if admin();
+      allow create, update: if (admin() || (signedIn() && request.auth.uid == uid && getAfter(userPath(uid)).data.role == 'user'))
+        && request.resource.data.ownerId == uid && imageOk(request.resource.data.image);
+      allow delete: if admin();
+    }
+    match /loanPhotos/{loanId} {
+      allow read: if admin();
+      allow create: if activeUser() && getAfter(/databases/$(database)/documents/loans/$(loanId)).data.borrowerId == request.auth.uid
+        && request.resource.data.ownerId == request.auth.uid && imageOk(request.resource.data.image);
+      allow update, delete: if false;
+    }
+    match /loans/{loanId} {
+      allow read: if admin() || (activeUser() && resource.data.borrowerId == request.auth.uid);
+      allow create: if activeUser() && get(userPath(request.auth.uid)).data.role == 'user'
+        && request.resource.data.borrowerId == request.auth.uid && request.resource.data.status == 'borrowed'
+        && request.resource.data.returnedAt == null && request.resource.data.returnedBy == null
+        && existsAfter(/databases/$(database)/documents/loanPhotos/$(loanId))
+        && getAfter(/databases/$(database)/documents/gas/$(request.resource.data.deviceId)).data.activeLoanId == loanId;
+      allow update: if admin() && resource.data.status == 'borrowed' && request.resource.data.status == 'returned'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','returnedAt','returnedBy'])
+        && request.resource.data.returnedBy == request.auth.uid
+        && getAfter(/databases/$(database)/documents/gas/$(resource.data.deviceId)).data.activeLoanId == null;
+      allow delete: if false;
+    }
+    match /gas/{deviceId} {
+      allow read: if activeUser();
+      allow create: if admin() && request.resource.data.status in ['good','minor_damage','major_damage','borrowed'] && !('activeLoanId' in request.resource.data);
+      allow update: if (admin() && (!('activeLoanId' in resource.data) || resource.data.activeLoanId == null) && (!('activeLoanId' in request.resource.data) || request.resource.data.activeLoanId == null))
+        || (activeUser() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','loanStatus','activeLoanId','updatedAt']) && get(userPath(request.auth.uid)).data.role == 'user' && (!('activeLoanId' in resource.data) || resource.data.activeLoanId == null)
+          && resource.data.status == 'good' && (resource.data.loanStatus == 'available' || !('loanStatus' in resource.data))
+          && request.resource.data.status == 'borrowed' && request.resource.data.loanStatus == 'borrowed'
+          && request.resource.data.activeLoanId is string
+          && getAfter(/databases/$(database)/documents/loans/$(request.resource.data.activeLoanId)).data.borrowerId == request.auth.uid
+          && getAfter(/databases/$(database)/documents/loans/$(request.resource.data.activeLoanId)).data.deviceId == deviceId)
+        || (admin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','loanStatus','activeLoanId','updatedAt']) && resource.data.activeLoanId is string && request.resource.data.activeLoanId == null
+          && request.resource.data.status == 'good' && request.resource.data.loanStatus == 'available'
+          && getAfter(/databases/$(database)/documents/loans/$(resource.data.activeLoanId)).data.status == 'returned');
+      allow delete: if admin() && (!('activeLoanId' in resource.data) || resource.data.activeLoanId == null);
+    }
+    match /transactions/{transactionId} {
+      allow read: if admin();
+      allow create: if admin() && request.resource.data.performedBy == request.auth.uid;
+      allow update, delete: if false;
+    }
+    match /trucks/{truckId} {
+      allow read: if activeUser();
+      allow update: if admin() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['assignedUserId']);
+      allow create, delete: if false;
+    }
+    match /stores/{storeId} { allow read: if activeUser(); allow write: if false; }
+    match /warehouses/{warehouseId} { allow read: if activeUser(); allow write: if false; }
+    match /{document=**} { allow read, write: if false; }
+  }
+}

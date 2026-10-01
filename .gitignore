@@ -30,8 +30,9 @@ dist-ssr
 .env.production
 .env.*.local
 
-# Firebase Admin Secret Key
-serviceAccountKey.json
+# Firebase Admin service account credentials
+serviceAccountKey*.json
+*-service-account*.json
 
 # Local Firebase cache and Git history backup
 .firebase/

@@ -5,7 +5,15 @@ export interface ILocation {
   lng: number;
 }
 
+export interface IVRPhoto {
+  url: string;
+  publicId: string;
+  bytes: number;
+  uploadedAt: string;
+}
+
 export interface IVR {
+  photos?: IVRPhoto[];
   id: string;
   status: "good" | "minor_damage" | "major_damage" | "borrowed";
   locationType: "store" | "truck" | "warehouse";

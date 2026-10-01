@@ -3,6 +3,8 @@ export interface IUser {
   name: string;
   nickname: string;
   phone: string;
+  studentId?: string;
+  studentEmail?: string;
   role: "admin" | "user";
   createdAt?: unknown;
   status: "active" | "suspend";
@@ -27,17 +29,24 @@ export interface IAuthResult {
 export interface IUpdateUserPayload {
   name: string;
   nickname: string;
+  studentId: string;
+  studentEmail: string;
+  identityImage?: string;
+  consent?: boolean;
   phone: string;
   role: "admin" | "user";
-  pin?: string;
   status: "active" | "suspend";
 }
 
 export interface ICreateUserPayload {
   name: string;
   nickname: string;
+  studentId: string;
+  studentEmail: string;
+  identityImage: string;
+  consent: boolean;
   phone: string;
-  pin: string;
+  password: string;
   role: "admin" | "user";
   status: "active" | "suspend";
 }
@@ -61,6 +70,8 @@ export interface IUserListItem {
   name: string;
   nickname: string;
   phone: string;
+  studentId?: string;
+  studentEmail?: string;
   role: "admin" | "user";
   status: "active" | "suspend";
   updatedAt?: unknown;

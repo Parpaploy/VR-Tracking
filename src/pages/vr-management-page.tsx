@@ -1,3 +1,4 @@
+import { VRPhotos } from "../components/vr-photos";
 import { useEffect, useState, useMemo } from "react";
 import Swal from "sweetalert2";
 import type {
@@ -71,6 +72,7 @@ export default function VRManagementPage() {
   const [newStatus, setNewStatus] = useState<
     "good" | "minor_damage" | "major_damage" | "borrowed"
   >("good");
+  const [photoBusy, setPhotoBusy] = useState(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
   const [lastEditorMap, setLastEditorMap] = useState<Record<string, string>>(
@@ -210,7 +212,7 @@ export default function VRManagementPage() {
       await Swal.fire({
         icon: "success",
         title: "เพิ่มอุปกรณ์ VRสำเร็จ",
-        text: `เพิ่มอุปกรณ์ VR "${newId}" แล้ว`,
+        text: `เพิ่มอุปกรณ์ VR "${newId}" แล้ว สามารถแนบรูปได้จากหน้ารายละเอียด`,
         confirmButtonColor: "#000",
       });
       setShowAddModal(false);
@@ -1571,6 +1573,7 @@ export default function VRManagementPage() {
               </p>
 
               <button
+                disabled={photoBusy}
                 onClick={() => setSelectedVR(null)}
                 className="absolute top-3 right-3 border border-black/10 rounded-full p-2"
               >
@@ -1579,6 +1582,11 @@ export default function VRManagementPage() {
             </div>
 
             <div className="w-full h-full overflow-y-auto">
+              <VRPhotos key={selectedVR.id} deviceId={selectedVR.id} photos={selectedVR.photos} onBusyChange={setPhotoBusy} onAdded={(photo) => {
+                const append = (item: IVR): IVR => ({ ...item, photos: [...(item.photos ?? []).filter(p => p.publicId !== photo.publicId), photo] });
+                setSelectedVR(prev => prev ? append(prev) : prev);
+                setDevices(prev => prev.map(item => item.id === selectedVR.id ? append(item) : item));
+              }} />
               <div className="mb-4 p-3 rounded-[10px] bg-black/3 flex flex-col gap-1">
                 <p className="text-[16px] text-black/60">
                   <span className="font-bold">สถานที่:</span>{" "}
@@ -1633,7 +1641,7 @@ export default function VRManagementPage() {
               <div className="flex justify-center items-center w-full gap-3 mt-3">
                 <button
                   onClick={handleDeleteVR}
-                  disabled={isDeleting || isSaving}
+                  disabled={isDeleting || isSaving || photoBusy}
                   className="px-4 py-2 w-full rounded-xl bg-red-500 text-white disabled:opacity-50"
                 >
                   {isDeleting ? "กำลังลบ..." : "ลบอุปกรณ์ VR"}
@@ -1641,7 +1649,7 @@ export default function VRManagementPage() {
                 <button
                   onClick={handleSaveStatus}
                   disabled={
-                    isSaving || !selectedVR || newStatus === selectedVR.status
+                    photoBusy || isSaving || !selectedVR || newStatus === selectedVR.status
                   }
                   className="px-4 py-2 w-full rounded-xl bg-black text-white disabled:opacity-50"
                 >

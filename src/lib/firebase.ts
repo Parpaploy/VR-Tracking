@@ -1,9 +1,9 @@
 // src/lib/firebase.ts
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
-import { getAuth, signInAnonymously, onAuthStateChanged } from "firebase/auth";
+import { getAuth } from "firebase/auth";
 
-const firebaseConfig = {
+export const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
@@ -17,15 +17,6 @@ const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
 export const auth = getAuth(app);
 
-export const authReady = new Promise<void>((resolve) => {
-  const unsub = onAuthStateChanged(auth, (user) => {
-    if (user) {
-      unsub();
-      resolve();
-    } else {
-      signInAnonymously(auth).catch((err) => {
-        console.error("Anonymous sign-in failed:", err);
-      });
-    }
-  });
-});
+export const authReady: Promise<void> = auth.authStateReady().then(() => undefined);
+// Consumers receive the rejection; this handler also covers startup before they mount.
+void authReady.catch(() => undefined);

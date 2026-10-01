@@ -1,4 +1,5 @@
 import {
+  arrayUnion,
   doc,
   collection,
   runTransaction,
@@ -9,7 +10,7 @@ import {
   setDoc,
 } from "firebase/firestore";
 import { db } from "./firebase";
-import type { IVR, IVRTransaction } from "../interfaces/data.interface";
+import type { IVR, IVRPhoto, IVRTransaction } from "../interfaces/data.interface";
 
 export async function fetchVR(): Promise<IVR[]> {
   const snap = await getDocs(collection(db, "gas"));
@@ -206,4 +207,11 @@ export async function addVR(
   });
 
   return newId;
+}
+
+export async function addVRPhoto(deviceId: string, photo: IVRPhoto): Promise<void> {
+  await updateDoc(doc(db, "gas", deviceId), {
+    photos: arrayUnion(photo),
+    editedAt: serverTimestamp(),
+  });
 }

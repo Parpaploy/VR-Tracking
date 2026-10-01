@@ -5,7 +5,8 @@ import { FaEdit } from "react-icons/fa";
 import {
   createUser,
   deleteUser,
-  fetchUsers,
+  fetchUserList,
+  fetchIdentityImage,
   updateUser,
 } from "../lib/auth.services";
 import Swal from "sweetalert2";
@@ -16,6 +17,7 @@ import type {
 import { FaTrash } from "react-icons/fa";
 import { EMPTY_FORM, USER_TABS } from "../constants/label";
 import { RxCross2 } from "react-icons/rx";
+import { compressPhoto } from "../lib/cloudinary";
 
 export default function UserManagementPage() {
   const { session } = useAuth();
@@ -23,6 +25,8 @@ export default function UserManagementPage() {
 
   const [form, setForm] = useState<ICreateUserPayload>(EMPTY_FORM);
   const [pinConfirm, setPinConfirm] = useState<string>("");
+  const [identityPreview, setIdentityPreview] = useState("");
+  const [identityBusy, setIdentityBusy] = useState(false);
   const [users, setUsers] = useState<IUserListItem[]>([]);
   const [saving, setSaving] = useState<boolean>(false);
   const [deleting, setDeleting] = useState<string | null>(null);
@@ -32,29 +36,37 @@ export default function UserManagementPage() {
   const [editForm, setEditForm] = useState({
     name: "",
     nickname: "",
+    studentId: "",
+    studentEmail: "",
     phone: "",
     role: "user" as "admin" | "user",
     status: "active" as "active" | "suspend",
-    pin: "",
+    identityImage: "",
+    consent: false,
   });
-  const [editPinConfirm, setEditPinConfirm] = useState<string>("");
+  const [identityOriginalUrl, setIdentityOriginalUrl] = useState("");
+  const [identityLoading, setIdentityLoading] = useState(false);
 
   const [isLoading, setIsLoading] = useState(true);
 
   const isFormValid =
     form.name.trim().length > 0 &&
     form.nickname.trim().length > 0 &&
+    /^[A-Za-z0-9-]{4,20}$/.test(form.studentId.trim()) &&
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.studentEmail.trim()) &&
+    Boolean(form.identityImage) &&
+    form.consent &&
     form.phone.trim().length === 10 &&
-    form.pin.length === 4 &&
-    pinConfirm.length === 4 &&
-    form.pin === pinConfirm;
+    form.password.length >= 6 &&
+    pinConfirm.length >= 6 &&
+    form.password === pinConfirm;
 
   useEffect(() => {
     if (session?.role !== "admin") navigate("/private", { replace: true });
   }, [session, navigate]);
 
   const loadUsers = async () => {
-    const data = await fetchUsers();
+    const data = await fetchUserList();
     setUsers(data);
   };
 
@@ -80,7 +92,7 @@ export default function UserManagementPage() {
     const init = async () => {
       setIsLoading(true);
       try {
-        const data = await fetchUsers();
+        const data = await fetchUserList();
         setUsers(data);
       } finally {
         setIsLoading(false);
@@ -94,7 +106,7 @@ export default function UserManagementPage() {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    setForm((prev) => ({ ...prev, [name]: name === "studentEmail" ? value.toLowerCase() : value }));
     setError("");
   };
 
@@ -135,6 +147,7 @@ export default function UserManagementPage() {
 
       setForm(EMPTY_FORM);
       setPinConfirm("");
+      setIdentityPreview("");
       loadUsers();
     } catch {
       Swal.close();
@@ -153,10 +166,10 @@ export default function UserManagementPage() {
   const handleDelete = async (id: string, nickname: string) => {
     const confirmResult = await Swal.fire({
       icon: "warning",
-      title: "ยืนยันการลบ?",
-      text: `ต้องการลบบัญชี "${nickname}" ใช่หรือไม่`,
+      title: "ระงับบัญชี?",
+      text: `ต้องการระงับบัญชี "${nickname}" ใช่หรือไม่`,
       showCancelButton: true,
-      confirmButtonText: "ลบ",
+      confirmButtonText: "ระงับบัญชี",
       cancelButtonText: "ยกเลิก",
       confirmButtonColor: "#dc2626",
       cancelButtonColor: "#6b7280",
@@ -173,8 +186,8 @@ export default function UserManagementPage() {
 
       await Swal.fire({
         icon: "success",
-        title: "ลบสำเร็จ",
-        text: `ลบบัญชี "${nickname}" แล้ว`,
+        title: "ระงับบัญชีสำเร็จ",
+        text: `บัญชี "${nickname}" ถูกระงับแล้ว`,
         confirmButtonColor: "#000",
       });
     } catch {
@@ -189,21 +202,14 @@ export default function UserManagementPage() {
     }
   };
 
-  const isPinValid =
-    editForm.pin.length === 0 ||
-    (editForm.pin.length === 4 &&
-      editPinConfirm.length === 4 &&
-      editForm.pin === editPinConfirm);
-
   const isEditChanged =
     selectedUser &&
     (editForm.name !== selectedUser.name ||
       editForm.nickname !== selectedUser.nickname ||
+      editForm.studentId !== (selectedUser.studentId ?? "") ||
       editForm.phone !== selectedUser.phone ||
       editForm.role !== selectedUser.role ||
-      editForm.status !== selectedUser.status ||
-      editForm.pin.length > 0) &&
-    isPinValid;
+      editForm.status !== selectedUser.status || Boolean(editForm.identityImage));
 
   const tabIndex = USER_TABS.findIndex((t) => t.key === tab);
   const isLastTab = tabIndex === USER_TABS.length - 1;
@@ -273,6 +279,17 @@ export default function UserManagementPage() {
                 className="w-full h-11 px-4 rounded-[10px] bg-white border border-black/20 placeholder:text-black/30 focus:outline-none focus:ring-0 focus:ring-offset-0 transition-all"
               />
             </div>
+            <div>
+              <label className="block uppercase tracking-widest mb-1.5">
+                รหัสนักศึกษา <span className="text-red-400">*</span>
+              </label>
+              <input name="studentId" required minLength={4} maxLength={20} pattern="[A-Za-z0-9-]{4,20}" value={form.studentId} onChange={handleChange} placeholder="เช่น 65123456" className="w-full h-11 px-4 rounded-[10px] bg-white border border-black/20 placeholder:text-black/30 focus:outline-none transition-all" />
+            </div>
+
+            <div>
+              <label className="block uppercase tracking-widest mb-1.5">อีเมลนักศึกษา <span className="text-red-400">*</span></label>
+              <input name="studentEmail" type="email" required maxLength={254} value={form.studentEmail} onChange={handleChange} placeholder="name@student.ac.th" className="w-full h-11 px-4 rounded-[10px] bg-white border border-black/20 placeholder:text-black/30 focus:outline-none transition-all" />
+            </div>
 
             <div>
               <label className="block uppercase tracking-widest mb-1.5">
@@ -295,49 +312,70 @@ export default function UserManagementPage() {
 
             <div>
               <label className="block uppercase tracking-widest mb-1.5">
-                PIN 4 หลัก <span className="text-red-400">*</span>
+              รหัสผ่าน (อย่างน้อย 6 ตัว) <span className="text-red-400">*</span>
               </label>
               <input
-                name="pin"
+                name="password"
                 type="password"
-                value={form.pin}
-                autoComplete="one-time-code"
-                inputMode="numeric"
+                value={form.password}
+                autoComplete="new-password"
                 onChange={(e) =>
                   setForm((p) => ({
                     ...p,
-                    pin: e.target.value.replace(/\D/g, ""),
+                    password: e.target.value,
                   }))
                 }
-                placeholder="••••"
-                maxLength={4}
+                placeholder="อย่างน้อย 6 ตัวอักษร"
+                minLength={6}
+                maxLength={128}
                 className="w-full h-11 px-4 rounded-[10px] bg-white border border-black/20 text-black text-xl text-center tracking-[0.4em] placeholder:text-black/30 placeholder: placeholder:tracking-normal focus:outline-none focus:ring-0 focus:ring-offset-0 transition-all"
               />
             </div>
             <div>
               <label className="block uppercase tracking-widest mb-1.5">
-                ยืนยัน PIN <span className="text-red-400">*</span>
+                ยืนยันรหัสผ่าน <span className="text-red-400">*</span>
               </label>
               <input
                 type="password"
                 value={pinConfirm}
-                autoComplete="one-time-code"
-                inputMode="numeric"
+                autoComplete="new-password"
                 onChange={(e) => {
-                  setPinConfirm(e.target.value.replace(/\D/g, ""));
+                  setPinConfirm(e.target.value);
                   setError("");
                 }}
-                placeholder="••••"
-                maxLength={4}
+                placeholder="ยืนยันรหัสผ่าน"
+                minLength={6}
                 className={`w-full h-11 px-4 rounded-[10px] bg-white border text-xl text-center tracking-[0.4em] placeholder:text-black/30 placeholder: placeholder:tracking-normal focus:outline-none focus:ring-0 focus:ring-offset-0 transition-all ${
-                  pinConfirm && form.pin !== pinConfirm
+                  pinConfirm && form.password !== pinConfirm
                     ? "border-red-500/50 focus:border-red-500"
-                    : pinConfirm && form.pin === pinConfirm
+                    : pinConfirm && form.password === pinConfirm
                       ? "border-emerald-500/50 focus:border-emerald-500"
                       : "border-black/20 focus:outline-none focus:ring-0 focus:ring-offset-0"
                 }`}
               />
             </div>
+
+            <div>
+              <label className="block uppercase tracking-widest mb-1.5">
+                สำเนาบัตรประชาชน <span className="text-red-400">* จำเป็น</span>
+              </label>
+              <input type="file" required accept="image/jpeg,image/png,image/webp" disabled={identityBusy || saving} onChange={async e => {
+                const file = e.target.files?.[0]; e.target.value = "";
+                setForm(p => ({ ...p, identityImage: "" })); setIdentityPreview(""); setError("");
+                if (!file) return;
+                setIdentityBusy(true);
+                try {
+                  const blob = await compressPhoto(file);
+                  const dataUrl = await new Promise<string>((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result)); reader.onerror = () => reject(new Error("อ่านเอกสารไม่สำเร็จ")); reader.readAsDataURL(blob); });
+                  setForm(p => ({ ...p, identityImage: dataUrl })); setIdentityPreview(dataUrl);
+                } catch (err) { setError(err instanceof Error ? err.message : "อ่านเอกสารไม่สำเร็จ"); }
+                finally { setIdentityBusy(false); }
+              }} className="w-full text-sm" />
+              <p className="mt-1 text-xs text-black/50">JPG, PNG หรือ WebP ไม่เกิน 20 MB · ระบบย่อภาพก่อนส่ง</p>
+              {identityBusy && <p className="text-sm">กำลังเตรียมรูป…</p>}
+              {identityPreview && <img src={identityPreview} alt="ตัวอย่างสำเนาบัตรประชาชน" className="mt-2 max-h-48 w-full rounded-lg object-contain" />}
+            </div>
+            <label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={form.consent} onChange={e => setForm(p => ({ ...p, consent: e.target.checked }))} className="mt-1" /><span>ยืนยันส่งสำเนาบัตรประชาชนเพื่อประกอบการสร้างบัญชี</span></label>
 
             <div>
               <label className="block  text-black mb-1.5">Role</label>
@@ -391,9 +429,9 @@ export default function UserManagementPage() {
 
             <button
               type="submit"
-              disabled={saving || !isFormValid}
+              disabled={saving || identityBusy || !isFormValid}
               className={`rounded-[10px] py-3 text-white transition-all active:scale-[0.98] mt-1 bg-black ${
-                saving || !isFormValid ? "opacity-50" : "opacity-100"
+                saving || identityBusy || !isFormValid ? "opacity-50" : "opacity-100"
               }`}
             >
               {saving ? (
@@ -473,6 +511,8 @@ export default function UserManagementPage() {
                       </p>
                       <p className="mb-3">({u.nickname})</p>
                       <p className="text-black/30">เบอร์โทร: {u.phone}</p>
+                      {u.studentId && <p className="text-black/30">รหัสนักศึกษา: {u.studentId}</p>}
+                      {u.studentEmail && <p className="text-black/30 truncate">อีเมลนักศึกษา: {u.studentEmail}</p>}
                     </div>
 
                     <div className="flex gap-2">
@@ -482,12 +522,18 @@ export default function UserManagementPage() {
                           setEditForm({
                             name: u.name,
                             nickname: u.nickname,
+                            studentId: u.studentId ?? "",
+                            studentEmail: u.studentEmail ?? "",
                             phone: u.phone,
                             role: u.role,
                             status: u.status,
-                            pin: "",
+                            identityImage: "",
+                            consent: false,
                           });
-                          setEditPinConfirm("");
+                          setIdentityPreview("");
+                          setIdentityOriginalUrl("");
+                          setIdentityLoading(true);
+                          void fetchIdentityImage(u.id).then(setIdentityOriginalUrl).catch(() => setIdentityOriginalUrl("")).finally(() => setIdentityLoading(false));
                         }}
                         className="text-black/30 transition-colors p-1.5 rounded-[10px]"
                       >
@@ -553,6 +599,36 @@ export default function UserManagementPage() {
               </div>
 
               <div className="w-full">
+                <label className="block text-[18px] text-black/50 mb-1">รหัสนักศึกษา <span className="text-red-500">*</span></label>
+                <input required minLength={4} maxLength={20} pattern="[A-Za-z0-9-]{4,20}" value={editForm.studentId} onChange={e => setEditForm(p => ({ ...p, studentId: e.target.value.toUpperCase() }))} className="w-full h-11 px-4 rounded-[10px] bg-white border border-black/20" placeholder="เช่น 65123456" />
+              </div>
+              <div className="w-full">
+                <label className="block text-[18px] text-black/50 mb-1">อีเมลนักศึกษา <span className="text-red-500">*</span></label>
+                <input required type="email" maxLength={254} value={editForm.studentEmail} readOnly className="w-full h-11 px-4 rounded-[10px] bg-gray-100 border border-black/20" placeholder="name@student.ac.th" />
+              </div>
+              <div className="w-full">
+                <label className="block text-[18px] text-black/50 mb-1">สำเนาบัตรประชาชน</label>
+                {identityLoading && <p className="text-sm text-black/50">กำลังโหลดสำเนาบัตรเดิม…</p>}
+                {identityOriginalUrl && <img src={identityOriginalUrl} alt="สำเนาบัตรประชาชนที่บันทึกไว้" className="max-h-48 w-full rounded-lg object-contain bg-black/5" />}
+                {!identityLoading && !identityOriginalUrl && <p className="text-xs text-black/50">ไม่มีเอกสารเดิม หรือโหลดเอกสารไม่สำเร็จ</p>}
+                <p className="text-xs text-black/50 mt-1">เลือกไฟล์ใหม่ด้านล่างเพื่อเปลี่ยนสำเนาบัตรเดิม</p>
+                <input type="file" accept="image/jpeg,image/png,image/webp" onChange={async e => {
+                  const file = e.target.files?.[0]; e.target.value = "";
+                  setEditForm(p => ({ ...p, identityImage: "", consent: false })); setError("");
+                  if (!file) return;
+                  setIdentityBusy(true);
+                  try {
+                    const blob = await compressPhoto(file);
+                    const dataUrl = await new Promise<string>((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result)); reader.onerror = () => reject(new Error("อ่านเอกสารไม่สำเร็จ")); reader.readAsDataURL(blob); });
+                    setEditForm(p => ({ ...p, identityImage: dataUrl })); setIdentityPreview(dataUrl);
+                  } catch (err) { setError(err instanceof Error ? err.message : "อ่านเอกสารไม่สำเร็จ"); }
+                  finally { setIdentityBusy(false); }
+                }} className="w-full text-sm" />
+                <p className="text-xs text-black/50">อัปโหลดใหม่เพื่อแทนที่เอกสารเดิม · JPG, PNG หรือ WebP ไม่เกิน 20 MB</p>
+                {identityPreview && <img src={identityPreview} alt="ตัวอย่างสำเนาบัตรใหม่" className="mt-2 max-h-40 w-full rounded-lg object-contain" />}
+              </div>
+              {editForm.identityImage && <label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={Boolean(editForm.consent)} onChange={e => setEditForm(p => ({ ...p, consent: e.target.checked }))} className="mt-1" /><span>ยืนยันบันทึกสำเนาบัตรประชาชนที่อัปโหลดใหม่</span></label>}
+              <div className="w-full">
                 <label className="block text-[18px] text-black/50 mb-1">
                   เบอร์โทร
                 </label>
@@ -567,51 +643,6 @@ export default function UserManagementPage() {
                   maxLength={10}
                   className="w-full h-11 px-4 rounded-[10px] bg-white border border-black/20 placeholder:text-black/30 focus:outline-none focus:ring-0 focus:ring-offset-0 transition-all"
                   placeholder="เบอร์โทร"
-                />
-              </div>
-
-              <div>
-                <label className="block text-black/50 mb-1">
-                  PIN ใหม่ (4 หลัก)
-                </label>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  value={editForm.pin}
-                  onChange={(e) =>
-                    setEditForm((p) => ({
-                      ...p,
-                      pin: e.target.value.replace(/\D/g, ""),
-                    }))
-                  }
-                  placeholder="••••"
-                  autoComplete="off"
-                  maxLength={4}
-                  style={{ WebkitTextSecurity: "disc" } as React.CSSProperties}
-                  className="w-full h-11 px-4 rounded-[10px] bg-white border border-black/20 text-[18px] text-center tracking-[0.4em] placeholder:text-black/30 focus:outline-none focus:ring-0 focus:ring-offset-0 transition-all"
-                />
-              </div>
-
-              <div>
-                <label className="block text-black/50 mb-1">ยืนยัน PIN</label>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  value={editPinConfirm}
-                  autoComplete="off"
-                  onChange={(e) =>
-                    setEditPinConfirm(e.target.value.replace(/\D/g, ""))
-                  }
-                  placeholder="••••"
-                  maxLength={4}
-                  style={{ WebkitTextSecurity: "disc" } as React.CSSProperties}
-                  className={`w-full h-11 px-4 rounded-[10px] bg-white border text-[18px] text-center tracking-[0.4em] placeholder:text-black/30 focus:outline-none focus:ring-0 focus:ring-offset-0 transition-all ${
-                    editPinConfirm && editForm.pin !== editPinConfirm
-                      ? "border-red-500/50"
-                      : editPinConfirm && editForm.pin === editPinConfirm
-                        ? "border-emerald-500/50"
-                        : "border-black/20"
-                  }`}
                 />
               </div>
 
@@ -656,7 +687,7 @@ export default function UserManagementPage() {
               </div>
 
               <button
-                disabled={!isEditChanged}
+                disabled={!isEditChanged || identityBusy || (Boolean(editForm.identityImage) && !editForm.consent)}
                 onClick={async () => {
                   if (!isEditChanged) return;
 
@@ -668,10 +699,7 @@ export default function UserManagementPage() {
                       didOpen: () => Swal.showLoading(),
                     });
 
-                    const result = await updateUser(selectedUser!.id, {
-                      ...editForm,
-                      pin: editForm.pin.length === 4 ? editForm.pin : undefined,
-                    });
+                    const result = await updateUser(selectedUser!.id, editForm);
 
                     setSelectedUser(null);
 

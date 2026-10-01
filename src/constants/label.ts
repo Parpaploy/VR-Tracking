@@ -4,8 +4,12 @@ import type { ICreateUserPayload } from "../interfaces/user.interface";
 export const EMPTY_FORM: ICreateUserPayload = {
   name: "",
   nickname: "",
+  studentId: "",
+  studentEmail: "",
+  identityImage: "",
+  consent: false,
   phone: "",
-  pin: "",
+  password: "",
   role: "user",
   status: "active",
 };
