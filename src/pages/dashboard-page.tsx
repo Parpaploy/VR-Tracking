@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import { loanImage, loanRequest } from '../lib/loans.services';
 import type { ActiveUser, Device, DeviceStatus, Loan, LoanStatus } from '../lib/loans.services';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 
 type Filter = 'all' | 'pending_approval' | 'borrowed' | 'good' | 'damaged';
 const date = (value: string | null) => value ? new Date(value).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' }) : '—';
@@ -19,10 +21,16 @@ const deviceTone = (status: string) => ({
   minor_damage: 'border-gray-300 bg-gray-100',
   major_damage: 'border-gray-300 bg-gray-100',
 }[status] ?? 'border-slate-200 bg-white');
-const loanLabel = (status: LoanStatus) => ({ pending_approval: 'รออนุมัติ', borrowed: 'กำลังยืม', returned: 'คืนแล้ว', rejected: 'ไม่อนุมัติ' })[status];
+const loanLabel = (status: LoanStatus) => ({ pending_approval: 'รออนุมัติ', borrowed: 'ถูกยืม', returned: 'คืนแล้ว', rejected: 'ไม่อนุมัติ' })[status];
+type StatusChange = { id: string; gasId: string; fromStatus: string; toStatus: string; borrowerName: string; performedBy: string; createdAt: string | null };
+const timestampToIso = (value: unknown): string | null => {
+  if (value && typeof value === 'object' && 'toDate' in value && typeof value.toDate === 'function') return (value.toDate as () => Date)().toISOString();
+  return typeof value === 'string' ? value : null;
+};
 
 export default function DashboardPage() {
   const [loans, setLoans] = useState<Loan[]>([]);
+  const [statusChanges, setStatusChanges] = useState<StatusChange[]>([]);
   const [devices, setDevices] = useState<Device[]>([]);
   const [users, setUsers] = useState<ActiveUser[]>([]);
   const [openDeviceId, setOpenDeviceId] = useState<string | null>(null);
@@ -64,6 +72,15 @@ export default function DashboardPage() {
       if (active) setLoans(data.loans);
     }).catch(reason => failed('ประวัติยืม', reason))
       .finally(() => { if (active) setLoansLoading(false); });
+    void getDocs(collection(db, 'transactions')).then(snap => {
+      if (!active) return;
+      const changes = snap.docs.flatMap(item => {
+        const d = item.data();
+        if (d.eventType !== 'status_change' || typeof d.gasId !== 'string') return [];
+        return [{ id: item.id, gasId: d.gasId, fromStatus: String(d.fromStatus ?? ''), toStatus: String(d.toStatus ?? ''), borrowerName: String(d.borrowerName ?? ''), performedBy: String(d.performedBy ?? ''), createdAt: timestampToIso(d.createdAt) }];
+      });
+      setStatusChanges(changes.sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? '')));
+    }).catch(reason => failed('ประวัติเปลี่ยนสถานะ', reason));
     void loanRequest<{ users: ActiveUser[] }>('/users').then(data => {
       if (active) setUsers(data.users);
     }).catch(reason => failed('รายชื่อผู้ใช้', reason))
@@ -176,10 +193,18 @@ export default function DashboardPage() {
     const term = search.trim().toLowerCase();
     return loans.filter(loan => !term || loan.deviceId.toLowerCase().includes(term) || loan.borrowerName.toLowerCase().includes(term));
   }, [loans, search]);
+  const visibleStatusChanges = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    return statusChanges.filter(item => !term || item.gasId.toLowerCase().includes(term) || item.borrowerName.toLowerCase().includes(term));
+  }, [statusChanges, search]);
+  const historyRows = useMemo(() => [
+    ...visibleStatusChanges.map(item => ({ kind: 'status' as const, item, time: item.createdAt ?? '' })),
+    ...visibleLoans.map(item => ({ kind: 'loan' as const, item, time: item.returnedAt ?? item.rejectedAt ?? item.approvedAt ?? item.borrowedAt ?? item.requestedAt ?? '' })),
+  ].sort((a, b) => b.time.localeCompare(a.time)), [visibleLoans, visibleStatusChanges]);
 
   const tiles: { label: string; value: number; filter: Filter; color: string }[] = [
     { label: 'รออนุมัติ', value: pendingCount, filter: 'pending_approval', color: 'bg-yellow-100' },
-    { label: 'กำลังยืม', value: borrowedCount, filter: 'borrowed', color: 'bg-red-100' },
+    { label: 'ถูกยืม', value: borrowedCount, filter: 'borrowed', color: 'bg-red-100' },
     { label: 'พร้อมใช้', value: goodCount, filter: 'good', color: 'bg-emerald-100' },
     { label: 'ชำรุด', value: damagedCount, filter: 'damaged', color: 'bg-gray-200' },
     { label: 'อุปกรณ์ทั้งหมด', value: devices.length, filter: 'all', color: 'bg-slate-100' },
@@ -290,7 +315,25 @@ export default function DashboardPage() {
 
       <section id="loan-history" className="rounded-2xl border bg-white p-4 sm:p-5">
         <h2 className="text-lg font-bold">คำขอยืมและประวัติ</h2><p className="mb-4 text-sm text-slate-500">ตรวจรูปและอนุมัติคำขอก่อนให้ผู้ใช้ยืม VR</p>
-        {visibleLoans.length === 0 ? <p className="py-5 text-center text-slate-500">{loansLoading ? 'กำลังโหลดประวัติยืม…' : loadErrors['ประวัติยืม'] ? 'ยังโหลดประวัติยืมไม่สำเร็จ' : 'ยังไม่มีรายการ'}</p> : <div className="overflow-x-auto"><table className="loan-history-table w-full text-left text-sm"><thead><tr className="border-b text-slate-500"><th className="p-3">รหัส VR</th><th className="p-3">เบอร์เครื่อง</th><th className="p-3">ผู้ใช้</th><th className="p-3">รูป selfie</th><th className="p-3">สถานะ</th><th className="p-3">ส่งคำขอ</th><th className="p-3">ยืมสำเร็จ</th><th className="p-3">คืน</th><th className="p-3">การดำเนินการ</th></tr></thead><tbody>{visibleLoans.map(loan => {
+        {historyRows.length === 0 ? <p className="py-5 text-center text-slate-500">{loansLoading ? 'กำลังโหลดประวัติยืม…' : loadErrors['ประวัติยืม'] || loadErrors['ประวัติเปลี่ยนสถานะ'] ? 'ยังโหลดประวัติไม่สำเร็จ' : 'ยังไม่มีรายการ'}</p> : <div className="overflow-x-auto"><table className="loan-history-table w-full text-left text-sm"><thead><tr className="border-b text-slate-500"><th className="p-3">รหัส VR</th><th className="p-3">เบอร์เครื่อง</th><th className="p-3">ผู้ใช้</th><th className="p-3">รูป selfie</th><th className="p-3">สถานะ</th><th className="p-3">ส่งคำขอ</th><th className="p-3">ยืมสำเร็จ</th><th className="p-3">คืน</th><th className="p-3">การดำเนินการ</th></tr></thead><tbody>{historyRows.map(row => {
+          if (row.kind === 'status') {
+          const { item } = row;
+          const device = devices.find(entry => entry.id === item.gasId);
+          const statusLabel = (status: string) => ({ good: 'พร้อมใช้', damaged: 'ชำรุด', minor_damage: 'ชำรุด', major_damage: 'ชำรุด', borrowed: 'ยืม' }[status] ?? status);
+          const actor = users.find(user => user.id === item.performedBy);
+          return <tr key={`status-${item.id}`} className="border-b last:border-0 bg-indigo-50/40">
+            <td data-label="รหัส VR" className="p-3 font-bold">{item.gasId}</td>
+            <td data-label="เบอร์เครื่อง" className="p-3">{device?.deviceNumber?.trim() || 'ไม่ระบุ'}</td>
+            <td data-label="ผู้ใช้" className="p-3">{item.borrowerName || '—'}</td>
+            <td data-label="รูป selfie" className="p-3">—</td>
+            <td data-label="สถานะ" className="p-3"><span className="font-semibold">{statusLabel(item.fromStatus)} → {statusLabel(item.toStatus)}</span></td>
+            <td data-label="ส่งคำขอ" className="p-3">{date(item.createdAt)}</td>
+            <td data-label="ยืมสำเร็จ" className="p-3">—</td>
+            <td data-label="คืน" className="p-3">—</td>
+            <td data-label="การดำเนินการ" className="p-3">ตั้งสถานะโดย {actor?.nickname || actor?.name || 'แอดมิน'}</td>
+          </tr>;
+          }
+          const loan = row.item;
           const deviceNumber = devices.find(device => device.id === loan.deviceId)?.deviceNumber?.trim();
           const operatorId = loan.returnedBy ?? loan.rejectedBy ?? loan.approvedBy;
           const operator = users.find(user => user.id === operatorId);
