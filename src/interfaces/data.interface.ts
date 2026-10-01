@@ -51,11 +51,17 @@ export interface IVRTransaction {
   // Legacy Firestore field retained for existing records and QR codes.
   gasId: string;
 
-  fromLocationType: LocationType;
-  fromLocationId: string;
+  eventType?: "location_move" | "status_change";
+  fromLocationType?: LocationType;
+  fromLocationId?: string;
 
-  toLocationType: LocationType;
-  toLocationId: string;
+  toLocationType?: LocationType;
+  toLocationId?: string;
+  fromStatus?: string;
+  toStatus?: string;
+  borrowerId?: string | null;
+  borrowerName?: string | null;
+  source?: "admin" | "user_loan";
 
   performedBy: string;
   createdAt: Timestamp;

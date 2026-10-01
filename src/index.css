@@ -181,6 +181,7 @@ h1, h2, h3 { letter-spacing: -.025em; line-height: 1.35; color: var(--ink); }
 .user-page label { color: #39473e; letter-spacing: 0; font-size: 14px; }
 .user-page [class*="text-[18px]"] { font-size: 15px; }
 .user-page .icon-button { flex-shrink: 0; }
+.user-page .user-name { overflow-wrap: anywhere; }
 .user-page > .grid > .text-gray-500 { grid-column: 1 / -1; min-height: 160px; }
 .user-page > .grid > div { border-radius: 8px; }
 .user-page [role="dialog"] { color: var(--ink); border-radius: 10px; }

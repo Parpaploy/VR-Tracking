@@ -200,6 +200,19 @@ export async function loanRequest<T>(path: string, body?: unknown): Promise<T> {
         borrowerName = String(borrowerSnap.data().nickname || borrowerSnap.data().name || '');
       }
 
+      const historyRef = doc(collection(db, 'transactions'));
+      tx.set(historyRef, {
+        gasId: id,
+        eventType: 'status_change',
+        fromStatus: String(device.status ?? 'good'),
+        toStatus: nextStatus,
+        performedBy: user.uid,
+        borrowerId,
+        borrowerName,
+        source: 'admin',
+        createdAt: serverTimestamp(),
+      });
+
       tx.update(deviceRef, {
         status: nextStatus,
         loanStatus: nextStatus === 'good' ? 'available' : nextStatus === 'damaged' ? 'unavailable' : 'borrowed',

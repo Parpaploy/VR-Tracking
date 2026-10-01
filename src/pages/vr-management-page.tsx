@@ -350,8 +350,8 @@ export default function VRManagementPage() {
           if (!map[key]) map[key] = new Set();
           map[key].add(data.gasId);
         };
-        addTo(data.toLocationType, data.toLocationId);
-        addTo(data.fromLocationType, data.fromLocationId);
+        if (data.toLocationType && data.toLocationId) addTo(data.toLocationType, data.toLocationId);
+        if (data.fromLocationType && data.fromLocationId) addTo(data.fromLocationType, data.fromLocationId);
       });
       setTxLocationMap(map);
     };
@@ -758,8 +758,8 @@ export default function VRManagementPage() {
           if (!storeVRMap![locationId]) storeVRMap![locationId] = new Set();
           storeVRMap![locationId].add(d.gasId);
         };
-        addTo(d.toLocationType, d.toLocationId);
-        addTo(d.fromLocationType, d.fromLocationId);
+        if (d.toLocationType && d.toLocationId) addTo(d.toLocationType, d.toLocationId);
+        if (d.fromLocationType && d.fromLocationId) addTo(d.fromLocationType, d.fromLocationId);
       });
     }
     const rows = await Promise.all(
@@ -829,8 +829,8 @@ export default function VRManagementPage() {
           if (!truckVRMap![locationId]) truckVRMap![locationId] = new Set();
           truckVRMap![locationId].add(d.gasId);
         };
-        addTo(d.toLocationType, d.toLocationId);
-        addTo(d.fromLocationType, d.fromLocationId);
+        if (d.toLocationType && d.toLocationId) addTo(d.toLocationType, d.toLocationId);
+        if (d.fromLocationType && d.fromLocationId) addTo(d.fromLocationType, d.fromLocationId);
       });
     }
     const rows = await Promise.all(

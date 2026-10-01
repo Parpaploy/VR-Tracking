@@ -24,7 +24,7 @@ import type {
   IVRTransaction,
   LocationType,
 } from "../interfaces/data.interface";
-import { STATUS_COLOR } from "../constants/label";
+import { STATUS_COLOR, STATUS_LABEL } from "../constants/label";
 import { RxCross2 } from "react-icons/rx";
 
 export default function VRScanPage() {
@@ -272,25 +272,25 @@ export default function VRScanPage() {
 
                 {lastTx ? (
                   <div className="space-y-3">
-                    <p className="font-bold text-[16px]">การย้ายล่าสุด</p>
+                    <p className="font-bold text-[16px]">ประวัติล่าสุด</p>
+                    {lastTx.eventType === "status_change" ? <>
+                      <div className="flex justify-between gap-3"><span className="text-gray-500">เปลี่ยนสถานะ</span><span>{STATUS_LABEL[lastTx.fromStatus as keyof typeof STATUS_LABEL] ?? lastTx.fromStatus ?? "-"} → {STATUS_LABEL[lastTx.toStatus as keyof typeof STATUS_LABEL] ?? lastTx.toStatus ?? "-"}</span></div>
+                      {lastTx.toStatus === "borrowed" && <div className="flex justify-between gap-3"><span className="text-gray-500">ผู้ถือ VR</span><span>{lastTx.borrowerName || "ไม่ระบุผู้ยืม"}</span></div>}
+                      <div className="flex justify-between gap-3"><span className="text-gray-500">แหล่งที่มา</span><span>แอดมินตั้งสถานะ</span></div>
+                    </> : <>
                     <div className="flex justify-between">
                       <span className="text-gray-500">จาก</span>
                       <span>
-                        {getLocationName(
-                          lastTx.fromLocationType,
-                          lastTx.fromLocationId,
-                        )}
+                        {lastTx.fromLocationType && lastTx.fromLocationId ? getLocationName(lastTx.fromLocationType, lastTx.fromLocationId) : "-"}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-500">ไปยัง</span>
                       <span>
-                        {getLocationName(
-                          lastTx.toLocationType,
-                          lastTx.toLocationId,
-                        )}
+                        {lastTx.toLocationType && lastTx.toLocationId ? getLocationName(lastTx.toLocationType, lastTx.toLocationId) : "-"}
                       </span>
                     </div>
+                    </>}
                     <div className="flex justify-between">
                       <span className="text-gray-500">โดย</span>
                       <span>{userMap[lastTx.performedBy] ?? "-"}</span>

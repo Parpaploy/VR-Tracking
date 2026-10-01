@@ -498,10 +498,10 @@ export default function UserManagementPage() {
                     className={`w-full h-full flex items-center gap-3 ${u.status === "active" ? "bg-white" : "bg-black/10"} border border-black/7 px-5 py-5 rounded-2xl`}
                   >
                     <div className="flex-1 min-w-0">
-                      <p className="pb-1 font-bold truncate">
-                        {u.name}
+                      <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 pb-1 font-bold">
+                        <span className="user-name min-w-0">{u.name}</span>
                         <span
-                          className={`text-[14px] font-bold px-3 py-1 rounded-full ml-2 ${
+                          className={`text-[14px] font-bold px-3 py-1 ${
                             u.role === "admin"
                               ? "bg-black text-white"
                               : "bg-black/10 text-black/60"
@@ -509,11 +509,11 @@ export default function UserManagementPage() {
                         >
                           {u.role === "admin" ? "แอดมิน" : "ผู้ใช้"}
                         </span>
-                      </p>
+                      </div>
                       <p className="mb-3">({u.nickname})</p>
                       <p className="text-black/30">เบอร์โทร: {u.phone}</p>
                       {u.studentId && <p className="text-black/30">รหัสนักศึกษา: {u.studentId}</p>}
-                      {u.studentEmail && <p className="text-black/30 truncate">อีเมลนักศึกษา: {u.studentEmail}</p>}
+                      {u.studentEmail && <p className="break-all text-black/30">อีเมลนักศึกษา: {u.studentEmail}</p>}
                     </div>
 
                     <div className="flex gap-2">
