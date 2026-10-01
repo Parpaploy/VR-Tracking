@@ -70,8 +70,9 @@ export default function VRManagementPage() {
   >("store");
   const [selectedVR, setSelectedVR] = useState<IVR | null>(null);
   const [newStatus, setNewStatus] = useState<
-    "good" | "minor_damage" | "major_damage" | "borrowed"
+    "good" | "damaged" | "borrowed"
   >("good");
+  const [manualBorrowerId, setManualBorrowerId] = useState("");
   const [photoBusy, setPhotoBusy] = useState(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
@@ -102,7 +103,7 @@ export default function VRManagementPage() {
   >("warehouse");
   const [addLocationId, setAddLocationId] = useState<string>("");
   const [addStatus, setAddStatus] = useState<
-    "good" | "minor_damage" | "major_damage" | "borrowed"
+    "good" | "damaged"
   >("good");
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
   const [isAdding, setIsAdding] = useState<boolean>(false);
@@ -424,9 +425,15 @@ export default function VRManagementPage() {
     if (!confirmResult.isConfirmed) return;
     try {
       setIsSaving(true);
-      await updateVRStatus(gasId, newStatus);
+      await updateVRStatus(gasId, newStatus, manualBorrowerId || undefined);
       setDevices((prev) =>
-        prev.map((g) => (g.id === gasId ? { ...g, status: newStatus } : g)),
+        prev.map((g) => (g.id === gasId ? {
+          ...g,
+          status: newStatus,
+          statusSource: "admin",
+          adminBorrowerId: newStatus === "borrowed" ? manualBorrowerId || null : null,
+          adminBorrowerName: newStatus === "borrowed" ? userMap[manualBorrowerId] ?? null : null,
+        } : g)),
       );
       await Swal.fire({
         icon: "success",
@@ -724,7 +731,7 @@ export default function VRManagementPage() {
       "ชื่อร้าน",
       "จำนวนอุปกรณ์ VR",
       "ปกติ",
-      "มีตำหนิ",
+      "รออนุมัติ",
       "ชำรุด",
       "ยืม",
       "ผู้ส่งล่าสุด",
@@ -776,8 +783,8 @@ export default function VRManagementPage() {
           storeName,
           String(storeDevices.length),
           String(storeDevices.filter((g) => g.status === "good").length),
-          String(storeDevices.filter((g) => g.status === "minor_damage").length),
-          String(storeDevices.filter((g) => g.status === "major_damage").length),
+          String(storeDevices.filter((g) => g.status === "pending_approval").length),
+          String(storeDevices.filter((g) => g.status === "damaged" || g.status === "minor_damage" || g.status === "major_damage").length),
           String(storeDevices.filter((g) => g.status === "borrowed").length),
           last.name,
           last.time,
@@ -795,7 +802,7 @@ export default function VRManagementPage() {
       "ชื่อรถ",
       "จำนวนอุปกรณ์ VR",
       "ปกติ",
-      "มีตำหนิ",
+      "รออนุมัติ",
       "ชำรุด",
       "ยืม",
       "คนขับล่าสุด",
@@ -847,8 +854,8 @@ export default function VRManagementPage() {
           truckName,
           String(truckDevices.length),
           String(truckDevices.filter((g) => g.status === "good").length),
-          String(truckDevices.filter((g) => g.status === "minor_damage").length),
-          String(truckDevices.filter((g) => g.status === "major_damage").length),
+          String(truckDevices.filter((g) => g.status === "pending_approval").length),
+          String(truckDevices.filter((g) => g.status === "damaged" || g.status === "minor_damage" || g.status === "major_damage").length),
           String(truckDevices.filter((g) => g.status === "borrowed").length),
           last.name,
           last.time,
@@ -888,10 +895,10 @@ export default function VRManagementPage() {
     (g) => g.status === "good",
   ).length;
   const warehouseMinor = warehouseItems.filter(
-    (g) => g.status === "minor_damage",
+    (g) => g.status === "pending_approval",
   ).length;
   const warehouseMajor = warehouseItems.filter(
-    (g) => g.status === "major_damage",
+    (g) => g.status === "damaged" || g.status === "minor_damage" || g.status === "major_damage",
   ).length;
   const warehouseBorrowed = warehouseItems.filter(
     (g) => g.status === "borrowed",
@@ -910,10 +917,10 @@ export default function VRManagementPage() {
     (g) => g.status === "good",
   ).length;
   const truckMinor = selectedTruckDevices.filter(
-    (g) => g.status === "minor_damage",
+    (g) => g.status === "pending_approval",
   ).length;
   const truckMajor = selectedTruckDevices.filter(
-    (g) => g.status === "major_damage",
+    (g) => g.status === "damaged" || g.status === "minor_damage" || g.status === "major_damage",
   ).length;
   const truckBorrowed = selectedTruckDevices.filter(
     (g) => g.status === "borrowed",
@@ -930,10 +937,10 @@ export default function VRManagementPage() {
     (g) => g.status === "good",
   ).length;
   const storeMinor = selectedStoreDevices.filter(
-    (g) => g.status === "minor_damage",
+    (g) => g.status === "pending_approval",
   ).length;
   const storeMajor = selectedStoreDevices.filter(
-    (g) => g.status === "major_damage",
+    (g) => g.status === "damaged" || g.status === "minor_damage" || g.status === "major_damage",
   ).length;
   const storeBorrowed = selectedStoreDevices.filter(
     (g) => g.status === "borrowed",
@@ -1102,7 +1109,8 @@ export default function VRManagementPage() {
                   key={g.id}
                   onClick={() => {
                     setSelectedVR(g);
-                    setNewStatus(g.status);
+                    setNewStatus(g.status === "good" ? "good" : g.status === "borrowed" ? "borrowed" : "damaged");
+                    setManualBorrowerId(g.adminBorrowerId ?? "");
                   }}
                   className="w-full flex items-center gap-3 bg-white border border-black/[0.07] px-5 py-3 rounded-[10px]"
                 >
@@ -1170,19 +1178,19 @@ export default function VRManagementPage() {
                   <p className="text-2xl font-bold text-yellow-600">
                     {warehouseMinor}
                   </p>
-                  <p className="text-sm text-yellow-700 mt-1">มีตำหนิ</p>
+                  <p className="text-sm text-yellow-700 mt-1">รออนุมัติ</p>
                 </div>
-                <div className="rounded-xl bg-red-50 p-4 text-center">
+                <div className="rounded-xl bg-gray-100 p-4 text-center">
                   <p className="text-2xl font-bold text-red-600">
                     {warehouseMajor}
                   </p>
-                  <p className="text-sm text-red-700 mt-1">ชำรุด</p>
+                  <p className="text-sm text-gray-700 mt-1">ชำรุด</p>
                 </div>
-                <div className="rounded-xl bg-blue-50 p-4 text-center">
+                <div className="rounded-xl bg-red-50 p-4 text-center">
                   <p className="text-2xl font-bold text-blue-600">
                     {warehouseBorrowed}
                   </p>
-                  <p className="text-sm text-blue-700 mt-1">ชำรุด</p>
+                  <p className="text-sm text-red-700 mt-1">ยืม</p>
                 </div>
               </div>
             </div>
@@ -1261,17 +1269,17 @@ export default function VRManagementPage() {
                       </span>
                     </th>
                     <th className="text-center py-2 px-0 font-bold text-black/40 text-[14px]">
-                      <span className="py-1 px-2 whitespace-nowrap rounded-full bg-yellow-100 text-yellow-700">
-                        มีตำหนิ
+                      <span className="py-1 px-2 whitespace-nowrap rounded-full bg-yellow-100 text-yellow-800">
+                        รออนุมัติ
                       </span>
                     </th>
                     <th className="text-center py-2 px-0 font-bold text-black/40 text-[14px]">
-                      <span className="py-1 px-2 rounded-full bg-red-100 text-red-700">
+                      <span className="py-1 px-2 rounded-full bg-gray-200 text-gray-700">
                         ชำรุด
                       </span>
                     </th>
                     <th className="text-center py-2 px-0 font-bold text-black/40 text-[14px]">
-                      <span className="py-1 px-2 rounded-full bg-blue-100 text-blue-700">
+                      <span className="py-1 px-2 rounded-full bg-red-100 text-red-700">
                         ยืม
                       </span>
                     </th>
@@ -1293,10 +1301,10 @@ export default function VRManagementPage() {
                         (g) => g.status === "good",
                       ).length;
                       const minor_damage = items.filter(
-                        (g) => g.status === "minor_damage",
+                        (g) => g.status === "pending_approval",
                       ).length;
                       const major_damage = items.filter(
-                        (g) => g.status === "major_damage",
+                        (g) => g.status === "damaged" || g.status === "minor_damage" || g.status === "major_damage",
                       ).length;
                       const borrowed = items.filter(
                         (g) => g.status === "borrowed",
@@ -1609,6 +1617,7 @@ export default function VRManagementPage() {
                   <span className="font-bold">ส่งล่าสุดโดย:</span>{" "}
                   {userMap[lastEditorMap[selectedVR.id] ?? ""] ?? "-"}
                 </p>
+                {selectedVR.status === "borrowed" && selectedVR.statusSource === "admin" && <p className="text-sm font-semibold text-red-700">สถานะยืมนี้ตั้งโดยแอดมิน ไม่ได้มาจากคำขอสแกนของผู้ใช้ · ผู้ถือ {selectedVR.adminBorrowerName ?? "ไม่ระบุผู้ยืม"}</p>}
               </div>
 
               <div className="flex flex-col gap-2 mb-6">
@@ -1619,23 +1628,20 @@ export default function VRManagementPage() {
                   ปกติ
                 </button>
                 <button
-                  onClick={() => setNewStatus("minor_damage")}
-                  className={`p-2 rounded-xl border ${newStatus === "minor_damage" ? "bg-yellow-100 border-yellow-400" : "border-black/10"}`}
-                >
-                  มีตำหนิ
-                </button>
-                <button
-                  onClick={() => setNewStatus("major_damage")}
-                  className={`p-2 rounded-xl border ${newStatus === "major_damage" ? "bg-red-100 border-red-400" : "border-black/10"}`}
+                  onClick={() => setNewStatus("damaged")}
+                  className={`p-2 rounded-xl border ${newStatus === "damaged" ? "bg-gray-200 border-gray-400" : "border-black/10"}`}
                 >
                   ชำรุด
                 </button>
                 <button
                   onClick={() => setNewStatus("borrowed")}
-                  className={`p-2 rounded-xl border ${newStatus === "borrowed" ? "bg-blue-100 border-blue-400" : "border-black/10"}`}
+                  className={`p-2 rounded-xl border ${newStatus === "borrowed" ? "bg-red-100 border-red-400" : "border-black/10"}`}
                 >
-                  ยืม
+                  ยืม (กำหนดโดยแอดมิน)
                 </button>
+                {newStatus === "borrowed" && <label className="text-sm font-semibold">ผู้ถือ VR (ไม่จำเป็น)
+                  <select value={manualBorrowerId} onChange={e => setManualBorrowerId(e.target.value)} className="mt-1 w-full rounded-lg border p-2.5"><option value="">ไม่ระบุผู้ยืม</option>{Object.entries(userMap).map(([id, name]) => <option key={id} value={id}>{name}</option>)}</select>
+                </label>}
               </div>
 
               <div className="flex justify-center items-center w-full gap-3 mt-3">
@@ -1646,15 +1652,13 @@ export default function VRManagementPage() {
                 >
                   {isDeleting ? "กำลังลบ..." : "ลบอุปกรณ์ VR"}
                 </button>
-                <button
+                {(newStatus !== (selectedVR.status === "good" ? "good" : selectedVR.status === "borrowed" ? "borrowed" : "damaged") || (newStatus === "borrowed" && manualBorrowerId !== (selectedVR.adminBorrowerId ?? ""))) && <button
                   onClick={handleSaveStatus}
-                  disabled={
-                    photoBusy || isSaving || !selectedVR || newStatus === selectedVR.status
-                  }
+                  disabled={photoBusy || isSaving}
                   className="px-4 py-2 w-full rounded-xl bg-black text-white disabled:opacity-50"
                 >
                   {isSaving ? "กำลังบันทึก..." : "บันทึก"}
-                </button>
+                </button>}
               </div>
             </div>
           </div>
@@ -1689,22 +1693,10 @@ export default function VRManagementPage() {
                     {STATUS_LABEL["good"]}
                   </button>
                   <button
-                    onClick={() => setAddStatus("minor_damage")}
-                    className={`p-3 rounded-[10px] border text-left font-bold text-[15px] transition-all ${addStatus === "minor_damage" ? "bg-yellow-100 border-yellow-400" : "border-black/10 text-black"}`}
+                    onClick={() => setAddStatus("damaged")}
+                    className={`p-3 rounded-[10px] border text-left font-bold text-[15px] transition-all ${addStatus === "damaged" ? "bg-gray-200 border-gray-400" : "border-black/10 text-black"}`}
                   >
-                    {STATUS_LABEL["minor_damage"]}
-                  </button>
-                  <button
-                    onClick={() => setAddStatus("major_damage")}
-                    className={`p-3 rounded-[10px] border text-left font-bold text-[15px] transition-all ${addStatus === "major_damage" ? "bg-red-100 border-red-400" : "border-black/10 text-black"}`}
-                  >
-                    {STATUS_LABEL["major_damage"]}
-                  </button>
-                  <button
-                    onClick={() => setAddStatus("borrowed")}
-                    className={`p-3 rounded-[10px] border text-left font-bold text-[15px] transition-all ${addStatus === "borrowed" ? "bg-blue-100 border-blue-400" : "border-black/10 text-black"}`}
-                  >
-                    {STATUS_LABEL["borrowed"]}
+                    {STATUS_LABEL["damaged"]}
                   </button>
                 </div>
               </div>

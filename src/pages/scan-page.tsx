@@ -41,7 +41,7 @@ export default function VRScanPage() {
   const [showPopup, setShowPopup] = useState(false);
 
   const [newStatus, setNewStatus] = useState<
-    "good" | "minor_damage" | "major_damage" | "borrowed"
+    "good" | "damaged" | "pending_approval" | "borrowed"
   >("good");
   const [isSaving, setIsSaving] = useState(false);
 
@@ -106,7 +106,7 @@ export default function VRScanPage() {
       }
 
       setVR(vrData);
-      if (vrData) setNewStatus(vrData.status);
+      if (vrData) setNewStatus(vrData.status === "good" || vrData.status === "borrowed" || vrData.status === "pending_approval" ? vrData.status : "damaged");
 
       if (vrData) {
         try {
@@ -132,6 +132,7 @@ export default function VRScanPage() {
 
   const handleSaveStatus = async () => {
     if (!vr) return;
+    if (newStatus !== "good" && newStatus !== "damaged") return;
     try {
       setIsSaving(true);
       await updateVRStatus(vr.id, newStatus);
@@ -248,17 +249,17 @@ export default function VRScanPage() {
                         setNewStatus(
                           e.target.value as
                             | "good"
-                            | "minor_damage"
-                            | "major_damage"
+                            | "damaged"
+                            | "pending_approval"
                             | "borrowed",
                         )
                       }
                       className={`px-3 py-1 rounded-full text-sm font-medium border-0 outline-none cursor-pointer ${STATUS_COLOR[newStatus]}`}
                     >
-                      <option value="good">ปกติ</option>
-                      <option value="minor_damage">มีตำหนิ</option>
-                      <option value="major_damage">ชำรุด</option>
-                      <option value="borrowed">ยืม</option>
+                      <option value="good">พร้อมใช้</option>
+                      <option value="damaged">ชำรุด</option>
+                      <option value="pending_approval" disabled>รออนุมัติ</option>
+                      <option value="borrowed" disabled>ยืม</option>
                     </select>
                   </div>
                   <div className="flex justify-between items-center border-b pb-2">
@@ -309,13 +310,13 @@ export default function VRScanPage() {
                   </p>
                 )}
 
-                <button
+                {(newStatus === "good" || newStatus === "damaged") && newStatus !== (vr.status === "minor_damage" || vr.status === "major_damage" ? "damaged" : vr.status) && <button
                   onClick={handleSaveStatus}
-                  disabled={isSaving || newStatus === vr.status}
+                  disabled={isSaving}
                   className="w-full py-2.5 rounded-xl bg-black text-white font-bold text-[15px] disabled:opacity-50 active:scale-[0.98] transition-all"
                 >
                   {isSaving ? "กำลังบันทึก..." : "บันทึก"}
-                </button>
+                </button>}
               </>
             )}
           </div>

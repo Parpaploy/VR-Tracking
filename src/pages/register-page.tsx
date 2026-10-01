@@ -47,17 +47,18 @@ export default function RegisterPage() {
     } catch (err) { setError(err instanceof Error ? err.message : "สมัครไม่สำเร็จ กรุณาลองใหม่"); }
     finally { lock.current = false; setBusy(false); }
   }
-  return <main className="w-full h-full overflow-y-auto bg-gray-50 px-5 py-8">
-    <div className="max-w-md mx-auto bg-white rounded-2xl p-6 shadow-sm">
+  return <main className="register-page">
+    <div className="surface">
+      <Link to="/" className="mb-6 inline-block text-sm font-semibold text-blue-700">← กลับไปเข้าสู่ระบบ</Link>
       <h1 className="text-2xl font-bold">สร้างบัญชีผู้ใช้</h1>
       <p className="text-sm text-gray-500 mt-2 mb-6">สมัครเพื่อใช้งาน VR Tracker</p>
       {success ? <div role="status" className="space-y-4"><p className="text-green-700">สมัครสำเร็จแล้ว ใช้อีเมลนักศึกษาและรหัสผ่านที่ตั้งไว้เพื่อเข้าสู่ระบบ</p><Link to="/" className="block bg-black text-white text-center rounded-xl p-3">ไปหน้าเข้าสู่ระบบ</Link></div> : <form onSubmit={submit} className="space-y-4">
         <fieldset disabled={busy || preparing} className="space-y-4 disabled:opacity-60">
-          {([
+          <div className="register-fields">{([
             ["name", "ชื่อ-นามสกุล", "text", 120], ["nickname", "ชื่อเล่น", "text", 60], ["studentId", "รหัสนักศึกษา", "text", 20], ["studentEmail", "อีเมลนักศึกษา", "email", 254], ["phone", "เบอร์โทรศัพท์", "tel", 10], ["password", "รหัสผ่าน (อย่างน้อย 6 ตัว)", "password", 128], ["confirmPassword", "ยืนยันรหัสผ่าน", "password", 128],
           ] as const).map(([key, label, type, maxLength]) => <label key={key} className="block text-sm font-medium">{label} <span className="text-red-600">*</span>
             <input required name={key} type={type} minLength={type === "password" ? 6 : undefined} maxLength={maxLength} inputMode={key === "phone" ? "numeric" : type === "email" ? "email" : "text"} pattern={key === "phone" ? "0[0-9]{9}" : key === "studentId" ? "[A-Za-z0-9-]{4,20}" : undefined} autoComplete={type === "password" ? "new-password" : key === "name" ? "name" : key === "phone" ? "tel" : key === "studentId" ? "off" : type === "email" ? "email" : "nickname"} value={form[key]} onChange={e => setForm({ ...form, [key]: type === "email" ? e.target.value.toLowerCase() : e.target.value })} className="block mt-1 border border-gray-300 rounded-lg p-3 w-full" />
-          </label>)}
+          </label>)}</div>
           <label className="block text-sm font-medium">สำเนาบัตรประชาชน <span className="text-red-600">* จำเป็น</span>
             <input required type="file" accept="image/jpeg,image/png,image/webp" onChange={e => void choose(e.target.files?.[0])} className="block mt-2 w-full text-sm" />
           </label>

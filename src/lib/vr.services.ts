@@ -11,6 +11,7 @@ import {
 } from "firebase/firestore";
 import { db } from "./firebase";
 import type { IVR, IVRPhoto, IVRTransaction } from "../interfaces/data.interface";
+import { loanRequest } from "./loans.services";
 
 export async function fetchVR(): Promise<IVR[]> {
   const snap = await getDocs(collection(db, "gas"));
@@ -23,14 +24,10 @@ export async function fetchVR(): Promise<IVR[]> {
 
 export async function updateVRStatus(
   gasId: string,
-  status: "good" | "minor_damage" | "major_damage" | "borrowed",
+  status: "good" | "damaged" | "borrowed",
+  borrowerId?: string,
 ) {
-  const vrRef = doc(db, "gas", gasId);
-
-  await updateDoc(vrRef, {
-    status,
-    editedAt: serverTimestamp(),
-  });
+  await loanRequest(`/devices/${encodeURIComponent(gasId)}/status`, { status, borrowerId });
 }
 
 export async function moveVRToWarehouse(
@@ -179,7 +176,7 @@ export async function fetchLastEditorPerVR(): Promise<Record<string, string>> {
 export async function addVR(
   locationType: "warehouse" | "store" | "truck",
   locationId: string,
-  status: "good" | "minor_damage" | "major_damage" | "borrowed",
+  status: "good" | "damaged",
 ): Promise<string> {
   const snap = await getDocs(collection(db, "gas"));
 

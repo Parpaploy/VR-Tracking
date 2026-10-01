@@ -1,0 +1,66 @@
+{
+  "regions": [
+    {
+      "id": "product-wordmark",
+      "kind": "text",
+      "grid": "A0:B0",
+      "note": "Replace the invented university name and seal with the VR Tracker product name only."
+    },
+    {
+      "id": "admin-navigation",
+      "kind": "control",
+      "grid": "C0:J0",
+      "note": "Compact tab navigation for the actual admin routes; omit fabricated report and notification destinations."
+    },
+    {
+      "id": "dashboard-title",
+      "kind": "text",
+      "grid": "A1:D1",
+      "note": "Dashboard title and short purpose line."
+    },
+    {
+      "id": "return-scan-action",
+      "kind": "control",
+      "grid": "I1:J1",
+      "note": "Action to open the existing QR return workflow."
+    },
+    {
+      "id": "inventory-summary",
+      "kind": "text",
+      "grid": "A2:J2",
+      "note": "Existing device counts and semantic statuses only."
+    },
+    {
+      "id": "approval-section-title",
+      "kind": "text",
+      "grid": "A3:J3",
+      "note": "Pending approval heading, count, and table column labels."
+    },
+    {
+      "id": "approval-rows",
+      "kind": "control",
+      "grid": "A4:J5",
+      "note": "Live pending loan rows with student, VR identifier, request time, view-photo and approve/reject actions. No purpose, duration, or fabricated student data.",
+      "codeDrawn": true
+    },
+    {
+      "id": "device-section-title",
+      "kind": "text",
+      "grid": "A6:J6",
+      "note": "Inventory title, count, search and status filter controls."
+    },
+    {
+      "id": "device-column-heads",
+      "kind": "text",
+      "grid": "A7:J7",
+      "note": "Actual inventory labels for device number, QR code, status, borrower and recent return."
+    },
+    {
+      "id": "device-rows",
+      "kind": "control",
+      "grid": "A7:J9",
+      "note": "Live device inventory rows and contextual actions; omit model, type and QR image fields absent from the product.",
+      "codeDrawn": true
+    }
+  ]
+}

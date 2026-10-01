@@ -11,7 +11,7 @@ export default function PublicLayout() {
   }
 
   return (
-    <div className="w-full h-svh flex justify-center">
+    <div className="public-shell">
       <Outlet />
     </div>
   );

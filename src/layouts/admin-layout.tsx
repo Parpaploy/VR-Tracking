@@ -25,15 +25,5 @@ export default function AdminLayout() {
 
   if (!isAuthorized) return null;
 
-  return (
-    <div
-      className="w-full min-h-[90svh] h-[90svh] max-h-[90svh] mt-[10svh] flex justify-center"
-      translate="no"
-    >
-      <div className="w-full mx-auto">
-        <Outlet />
-        <AdminNavbar />
-      </div>
-    </div>
-  );
+  return <div className="app-shell" translate="no"><AdminNavbar /><div className="app-content"><Outlet /></div></div>;
 }

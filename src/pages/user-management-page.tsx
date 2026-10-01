@@ -218,8 +218,9 @@ export default function UserManagementPage() {
 
   return (
     <main
-      className={`w-full h-[90svh] flex flex-col gap-y-5 min-h-0 p-3 bg-white text-black ${tab === "create" ? "pb-5" : "pb-0"}`}
+      className="user-page flex flex-col gap-y-5"
     >
+      <header className="page-heading !mb-0"><h1>จัดการผู้ใช้</h1><p>ดูแลบัญชี ข้อมูลสมาชิก และสิทธิ์การใช้งาน</p></header>
       <div className="relative flex gap-1 border border-black/[0.07] rounded-[10px] p-1 bg-white overflow-hidden min-h-15">
         <div
           className="absolute top-1 bottom-1 rounded-[10px] bg-black transition-all duration-300 ease-in-out"
@@ -466,7 +467,7 @@ export default function UserManagementPage() {
       )}
 
       {tab === "list" && (
-        <div className="flex text-[18px] flex-col gap-y-3 justify-start items-center w-full h-full pb-5 overflow-y-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-start w-full pb-5">
           {isLoading ? (
             <div className="flex flex-1 justify-center items-center w-full text-gray-500">
               <div className="w-18 h-18 border-6 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
@@ -494,7 +495,7 @@ export default function UserManagementPage() {
                 .map((u) => (
                   <div
                     key={u.id}
-                    className={`w-full flex items-center gap-3 ${u.status === "active" ? "bg-white" : "bg-black/10"} border border-black/7 px-5 py-2 rounded-[10px]`}
+                    className={`w-full h-full flex items-center gap-3 ${u.status === "active" ? "bg-white" : "bg-black/10"} border border-black/7 px-5 py-5 rounded-2xl`}
                   >
                     <div className="flex-1 min-w-0">
                       <p className="pb-1 font-bold truncate">
@@ -535,7 +536,7 @@ export default function UserManagementPage() {
                           setIdentityLoading(true);
                           void fetchIdentityImage(u.id).then(setIdentityOriginalUrl).catch(() => setIdentityOriginalUrl("")).finally(() => setIdentityLoading(false));
                         }}
-                        className="text-black/30 transition-colors p-1.5 rounded-[10px]"
+                        aria-label={`แก้ไขบัญชี ${u.nickname}`} className="icon-button"
                       >
                         <FaEdit size={18} />
                       </button>
@@ -544,7 +545,7 @@ export default function UserManagementPage() {
                         <button
                           onClick={() => handleDelete(u.id, u.nickname)}
                           disabled={deleting === u.id}
-                          className="text-black/30 disabled:opacity-30 transition-colors p-1.5 rounded-[10px]"
+                          aria-label={`ระงับบัญชี ${u.nickname}`} className="icon-button disabled:opacity-30"
                         >
                           <FaTrash size={18} />
                         </button>
@@ -558,12 +559,13 @@ export default function UserManagementPage() {
       )}
 
       {selectedUser && (
-        <div className="mx-auto fixed inset-0 bg-black/40 flex items-center justify-center z-99">
-          <div className="relative bg-white lg:w-[35%] w-[85%] lg:h-[85%] h-[70%] rounded-[10px] shadow-xl p-6 pb-0 flex flex-col">
+        <div className="mx-auto fixed inset-0 bg-black/40 p-4 flex items-center justify-center z-99">
+          <div role="dialog" aria-modal="true" aria-label="แก้ไขบัญชีผู้ใช้" className="relative bg-white w-full max-w-xl h-[85svh] max-h-[900px] rounded-2xl shadow-xl p-6 pb-0 flex flex-col">
             <h2 className="text-[24px] font-bold mb-2">แก้ไขบัญชี</h2>
 
             <button
               onClick={() => setSelectedUser(null)}
+              aria-label="ปิดหน้าต่างแก้ไขบัญชี"
               className="absolute top-3 right-3 border border-black/10 rounded-full p-2"
             >
               <RxCross2 size={18} />
@@ -572,7 +574,7 @@ export default function UserManagementPage() {
             <div className="text-[18px] w-full h-full flex flex-col gap-4 overflow-y-auto pt-2 pb-6">
               <div className="w-full">
                 <label className="block text-[18px] text-black/50 mb-1">
-                  ชื่อ-นาสกุล
+                  ชื่อ-นามสกุล
                 </label>
                 <input
                   value={editForm.name}
@@ -647,7 +649,7 @@ export default function UserManagementPage() {
               </div>
 
               <div>
-                <label className="block  text-black">Role</label>
+                <label className="block text-black">สิทธิ์ผู้ใช้</label>
                 <div className="flex gap-2">
                   {(["user", "admin"] as const).map((r) => (
                     <button
@@ -666,7 +668,7 @@ export default function UserManagementPage() {
               </div>
 
               <div className="mb-1.5">
-                <label className="block text-black mb-1">Status</label>
+                <label className="block text-black mb-1">สถานะบัญชี</label>
                 <div className="flex gap-2">
                   {(["active", "suspend"] as const).map((s) => (
                     <button

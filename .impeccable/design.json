@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-01T00:00:00+07:00",
+  "title": "Design System: VR Tracker",
+  "extensions": {
+    "colorMeta": {
+      "primary": { "role": "primary", "displayName": "Register Indigo", "canonical": "#2e2f70" },
+      "primary-deep": { "role": "primary", "displayName": "Deep Register Indigo", "canonical": "#23245a" },
+      "primary-wash": { "role": "primary", "displayName": "Indigo Wash", "canonical": "#e9eaf5" },
+      "paper": { "role": "neutral", "displayName": "Warm Paper", "canonical": "#fbfaf6" },
+      "paper-deep": { "role": "neutral", "displayName": "Paper Background", "canonical": "#f3f2ec" },
+      "ink": { "role": "neutral", "displayName": "Register Ink", "canonical": "#202a25" },
+      "ink-soft": { "role": "neutral", "displayName": "Soft Ink", "canonical": "#667169" },
+      "line": { "role": "neutral", "displayName": "Rule Gray", "canonical": "#d9ddd5" },
+      "pending-wash": { "role": "tertiary", "displayName": "Pending Yellow Wash", "canonical": "#fff4d6" },
+      "pending-ink": { "role": "tertiary", "displayName": "Pending Yellow Ink", "canonical": "#78590e" },
+      "borrowed-wash": { "role": "tertiary", "displayName": "Borrowed Red Wash", "canonical": "#f9e7e4" },
+      "borrowed-ink": { "role": "tertiary", "displayName": "Borrowed Red Ink", "canonical": "#913d34" },
+      "ready-wash": { "role": "tertiary", "displayName": "Ready Green Wash", "canonical": "#e9f0e9" },
+      "ready-ink": { "role": "tertiary", "displayName": "Ready Green Ink", "canonical": "#315f49" },
+      "damaged-wash": { "role": "tertiary", "displayName": "Damaged Gray Wash", "canonical": "#e8e9e6" },
+      "focus": { "role": "primary", "displayName": "Focus Outline", "canonical": "#7779b3" }
+    },
+    "shadows": [
+      { "name": "surface-whisper", "value": "0 2px 5px #202a2508", "purpose": "Very subtle surface separation; dashboard register cards remain flat." },
+      { "name": "auth-surface-whisper", "value": "0 3px 12px #202a2508", "purpose": "Subtle separation around the authentication form surface." }
+    ],
+    "breakpoints": [
+      { "name": "tablet", "value": "800px" },
+      { "name": "compact", "value": "680px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Action",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Main submit or navigation action in the VR Tracker register.",
+      "html": "<button class=\"ds-button-primary\" type=\"button\">บันทึก</button>",
+      "css": ".ds-button-primary { padding: 12px 18px; color: #fffefa; background: #2e2f70; border: 1px solid #2e2f70; border-radius: 0; font: 700 14px/1.6 'Noto Sans Thai', 'Leelawadee UI', Thonburi, Tahoma, system-ui, sans-serif; transition: background-color .18s ease, border-color .18s ease, color .18s ease; } .ds-button-primary:hover:not(:disabled) { background: #23245a; border-color: #23245a; } .ds-button-primary:focus-visible { outline: 3px solid #7779b3; outline-offset: 3px; } .ds-button-primary:disabled { opacity: .4; cursor: not-allowed; }"
+    },
+    {
+      "name": "Secondary Action",
+      "kind": "button",
+      "description": "Outlined utility or review action beside a primary decision.",
+      "html": "<button class=\"ds-button-secondary\" type=\"button\">ดูรูปแนบ</button>",
+      "css": ".ds-button-secondary { padding: 8px 12px; color: #23245a; background: #fffefa; border: 1px solid #d9ddd5; border-radius: 0; font: 600 13px/1.5 'Noto Sans Thai', 'Leelawadee UI', Thonburi, Tahoma, system-ui, sans-serif; transition: background-color .18s ease, border-color .18s ease, color .18s ease; } .ds-button-secondary:hover { background: #e9eaf5; border-color: #aeb0ce; } .ds-button-secondary:focus-visible { outline: 3px solid #7779b3; outline-offset: 3px; }"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Labeled device or account field with a visible keyboard focus state.",
+      "html": "<label class=\"ds-field-label\">เบอร์เครื่อง<input class=\"ds-input\" placeholder=\"ยังไม่ระบุเบอร์เครื่อง\"></label>",
+      "css": ".ds-field-label { display: grid; gap: 4px; color: #39473e; font: 600 13px/1.5 'Noto Sans Thai', 'Leelawadee UI', Thonburi, Tahoma, system-ui, sans-serif; } .ds-input { min-height: 46px; padding: 10px 12px; color: #202a25; background: #fffefa; border: 1px solid #cdd4cc; border-radius: 0; font: 400 14px/1.6 'Noto Sans Thai', 'Leelawadee UI', Thonburi, Tahoma, system-ui, sans-serif; } .ds-input::placeholder { color: #778279; opacity: 1; } .ds-input:focus { border-color: #686aa9; box-shadow: 0 0 0 3px #2e2f701a; outline: 3px solid #7779b3; outline-offset: 2px; }"
+    },
+    {
+      "name": "Application Navigation",
+      "kind": "nav",
+      "description": "Horizontal route navigation with a clear active underline.",
+      "html": "<nav class=\"ds-nav\"><a href=\"#overview\" class=\"ds-nav-link ds-active\">ภาพรวมอุปกรณ์</a><a href=\"#return\" class=\"ds-nav-link\">รับคืน VR</a></nav>",
+      "css": ".ds-nav { display: flex; gap: 26px; overflow-x: auto; } .ds-nav-link { flex: 0 0 auto; padding: 12px 3px 10px; color: #606d64; border-bottom: 2px solid transparent; text-decoration: none; font: 400 13px/1.5 'Noto Sans Thai', 'Leelawadee UI', Thonburi, Tahoma, system-ui, sans-serif; transition: color .18s ease, border-color .18s ease; } .ds-nav-link:hover { color: #2e2f70; } .ds-nav-link.ds-active { color: #23245a; border-color: #2e2f70; font-weight: 700; } .ds-nav-link:focus-visible { outline: 3px solid #7779b3; outline-offset: 3px; }"
+    },
+    {
+      "name": "Pending Status Mark",
+      "kind": "chip",
+      "description": "Written pending label on a yellow wash for requests awaiting review.",
+      "html": "<span class=\"ds-status-pending\">รออนุมัติ</span>",
+      "css": ".ds-status-pending { display: inline-block; padding: 4px 10px; color: #78590e; background: #fff4d6; border-radius: 0; font: 650 12px/1.4 'Noto Sans Thai', 'Leelawadee UI', Thonburi, Tahoma, system-ui, sans-serif; }"
+    },
+    {
+      "name": "Paper Surface",
+      "kind": "card",
+      "description": "Flat register section framed by a fine neutral rule.",
+      "html": "<section class=\"ds-surface\"><strong>คำขอรออนุมัติ</strong><p>รายการยืมและการดำเนินการ</p></section>",
+      "css": ".ds-surface { padding: 20px; color: #202a25; background: #fbfaf6; border: 1px solid #d9ddd5; border-radius: 0; font: 400 14px/1.6 'Noto Sans Thai', 'Leelawadee UI', Thonburi, Tahoma, system-ui, sans-serif; } .ds-surface strong { font-weight: 700; } .ds-surface p { margin: 6px 0 0; color: #667169; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Equipment Issue Register",
+    "overview": "VR Tracker presents equipment custody as a well-kept issue and return register. Warm paper surfaces, dark readable ink, ruled divisions, aligned identifiers and times, and restrained indigo actions make the current state and next hand-off easy to find. Thai-capable sans serif type supports both the student borrowing path and the administrator's denser inventory work.\n\nThe visual language stays functional: pending requests sit alongside the borrower, device, and request time; inventory exposes device identity and status; return starts with a QR scan. The product identity is VR Tracker alone, without institutional naming or marks.",
+    "keyCharacteristics": [
+      "Warm paper and dark ink form the working canvas.",
+      "Indigo identifies navigation, links, focus, and primary actions.",
+      "Equipment and loan states retain distinct semantic colors and written labels.",
+      "Square corners and fine rules keep the register orderly."
+    ],
+    "rules": [
+      { "name": "The State Text Rule", "body": "Keep each status written beside its color treatment so color is never the only status cue.", "section": "colors" },
+      { "name": "The Ledger Readability Rule", "body": "Keep identifiers and timestamps easy to scan; use tabular numerals where the register renders them.", "section": "typography" }
+    ],
+    "dos": [
+      "Do use Register Indigo for navigation, links, focus, and primary actions.",
+      "Do pair every semantic status color with a readable status label.",
+      "Do use square corners and fine rules for recurring surfaces and controls.",
+      "Do keep device identifiers, borrower names, and event times aligned and scannable.",
+      "Do keep the product identity to “VR Tracker.”"
+    ],
+    "donts": [
+      "Don't add university names, seals, or logos to the product identity.",
+      "Don't use color alone to communicate equipment or loan state.",
+      "Don't introduce decorative texture, heavy shadows, or rounded surfaces into the register language.",
+      "Don't invent due dates, institutional claims, or activity absent from product data."
+    ]
+  }
+}

@@ -1,0 +1,769 @@
+{
+  "tool": "comp-spec",
+  "version": 1,
+  "createdAt": "2026-10-01T13:13:49.686Z",
+  "comp": ".impeccable/mocks/dashboard-a.png",
+  "warnings": [
+    "region approval-rows: \"codeDrawn\": true set in the regions file (the painted-material refusal is overridden: code draws this region)",
+    "region device-rows: \"codeDrawn\": true set in the regions file (the painted-material refusal is overridden: code draws this region)"
+  ],
+  "uncoveredInkCells": [],
+  "compSize": {
+    "width": 1505,
+    "height": 1045
+  },
+  "aspect": 1.4402,
+  "orientation": "landscape",
+  "palette": [
+    {
+      "hex": "#f7f7f5",
+      "coverage": 0.9409
+    },
+    {
+      "hex": "#ced1cf",
+      "coverage": 0.0197
+    },
+    {
+      "hex": "#a0a3a4",
+      "coverage": 0.0164
+    },
+    {
+      "hex": "#254d3d",
+      "coverage": 0.0132
+    },
+    {
+      "hex": "#6f767a",
+      "coverage": 0.0098
+    }
+  ],
+  "bands": [
+    {
+      "y": 0.0225,
+      "strength": 0.4221
+    },
+    {
+      "y": 0.0562,
+      "strength": 0.2451
+    },
+    {
+      "y": 0.1124,
+      "strength": 0.5148
+    },
+    {
+      "y": 0.1348,
+      "strength": 0.3703
+    },
+    {
+      "y": 0.1685,
+      "strength": 0.3153
+    },
+    {
+      "y": 0.2247,
+      "strength": 0.31
+    },
+    {
+      "y": 0.3258,
+      "strength": 0.2423
+    },
+    {
+      "y": 0.3708,
+      "strength": 0.2039
+    },
+    {
+      "y": 0.3933,
+      "strength": 0.307
+    },
+    {
+      "y": 0.4494,
+      "strength": 0.3763
+    },
+    {
+      "y": 0.4831,
+      "strength": 0.2702
+    },
+    {
+      "y": 0.5169,
+      "strength": 0.4152
+    },
+    {
+      "y": 0.5506,
+      "strength": 0.326
+    },
+    {
+      "y": 0.6067,
+      "strength": 0.2451
+    },
+    {
+      "y": 0.6292,
+      "strength": 0.2826
+    },
+    {
+      "y": 0.6742,
+      "strength": 0.2357
+    },
+    {
+      "y": 0.6966,
+      "strength": 0.2071
+    },
+    {
+      "y": 0.9663,
+      "strength": 0.2266
+    }
+  ],
+  "regions": [
+    {
+      "id": "product-wordmark",
+      "kind": "text",
+      "note": "Replace the invented university name and seal with the VR Tracker product name only.",
+      "grid": "A0:B0",
+      "coverBox": {
+        "x": 0,
+        "y": 0,
+        "w": 0.2,
+        "h": 0.1
+      },
+      "box": {
+        "x": 0.0159,
+        "y": 0.0057,
+        "w": 0.1841,
+        "h": 0.0689
+      },
+      "px": {
+        "x": 24,
+        "y": 6,
+        "w": 277,
+        "h": 72
+      },
+      "aspect": 3.8472,
+      "palette": [
+        {
+          "hex": "#f7f7ec",
+          "coverage": 0.7962
+        },
+        {
+          "hex": "#898f8d",
+          "coverage": 0.0843
+        },
+        {
+          "hex": "#c5cac5",
+          "coverage": 0.0628
+        },
+        {
+          "hex": "#545b5d",
+          "coverage": 0.0302
+        },
+        {
+          "hex": "#0b1218",
+          "coverage": 0.0266
+        }
+      ],
+      "detail": {
+        "energy": 55.1215
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null,
+      "type": {
+        "comp": {
+          "lines": 1,
+          "glyphs": 18,
+          "capHeightPx": 25.6,
+          "inkIsDark": true,
+          "allCaps": false,
+          "advance": 0.4293,
+          "advTall": null,
+          "advX": 0.4293,
+          "gap": 0.078,
+          "xRatio": 0.4839,
+          "stemW": 0.1155,
+          "contrast": 1.216,
+          "serif": 0.558,
+          "densTall": null,
+          "densX": 0.5981,
+          "weight": 0.5981
+        },
+        "widthClass": "condensed",
+        "weightClass": "bold",
+        "chosen": {
+          "family": "Are You Serious",
+          "weight": 400,
+          "fontSizePx": 37,
+          "source": "catalog",
+          "estimatedSize": true,
+          "stamp": "15735ff5caf5"
+        }
+      }
+    },
+    {
+      "id": "admin-navigation",
+      "kind": "control",
+      "note": "Compact tab navigation for the actual admin routes; omit fabricated report and notification destinations.",
+      "grid": "C0:J0",
+      "coverBox": {
+        "x": 0.2,
+        "y": 0,
+        "w": 0.8,
+        "h": 0.1
+      },
+      "box": {
+        "x": 0.3914,
+        "y": 0.0172,
+        "w": 0.0718,
+        "h": 0.0517
+      },
+      "px": {
+        "x": 589,
+        "y": 18,
+        "w": 108,
+        "h": 54
+      },
+      "aspect": 2,
+      "palette": [
+        {
+          "hex": "#1e4739",
+          "coverage": 0.5263
+        },
+        {
+          "hex": "#f6f8ec",
+          "coverage": 0.4195
+        },
+        {
+          "hex": "#a9bfb3",
+          "coverage": 0.0341
+        },
+        {
+          "hex": "#5a786a",
+          "coverage": 0.0108
+        },
+        {
+          "hex": "#082818",
+          "coverage": 0.0093
+        }
+      ],
+      "detail": {
+        "energy": 15.1332
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null
+    },
+    {
+      "id": "dashboard-title",
+      "kind": "text",
+      "note": "Dashboard title and short purpose line.",
+      "grid": "A1:D1",
+      "coverBox": {
+        "x": 0,
+        "y": 0.1,
+        "w": 0.4,
+        "h": 0.1
+      },
+      "box": {
+        "x": 0.0159,
+        "y": 0.1005,
+        "w": 0.303,
+        "h": 0.0746
+      },
+      "px": {
+        "x": 24,
+        "y": 105,
+        "w": 456,
+        "h": 78
+      },
+      "aspect": 5.8462,
+      "palette": [
+        {
+          "hex": "#f7f7f6",
+          "coverage": 0.7838
+        },
+        {
+          "hex": "#101d25",
+          "coverage": 0.0873
+        },
+        {
+          "hex": "#939697",
+          "coverage": 0.0554
+        },
+        {
+          "hex": "#c6c8c7",
+          "coverage": 0.0443
+        },
+        {
+          "hex": "#374447",
+          "coverage": 0.0291
+        }
+      ],
+      "detail": {
+        "energy": 60.6301
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null,
+      "type": {
+        "comp": {
+          "lines": 1,
+          "glyphs": 13,
+          "capHeightPx": 36.9,
+          "inkIsDark": true,
+          "allCaps": false,
+          "advance": 0.5962,
+          "advTall": 0.7994,
+          "advX": 0.5691,
+          "gap": 0.0948,
+          "xRatio": 0.6544,
+          "stemW": 0.1625,
+          "contrast": 1.1963,
+          "serif": 1.4399,
+          "densTall": 0.4612,
+          "densX": 0.5976,
+          "weight": 0.4612
+        },
+        "widthClass": "condensed",
+        "weightClass": "regular",
+        "chosen": {
+          "family": "Sansita Swashed",
+          "weight": 400,
+          "fontSizePx": 53,
+          "source": "catalog",
+          "estimatedSize": true,
+          "stamp": "85f56845ca0e"
+        }
+      }
+    },
+    {
+      "id": "return-scan-action",
+      "kind": "control",
+      "note": "Action to open the existing QR return workflow.",
+      "grid": "I1:J1",
+      "coverBox": {
+        "x": 0.8,
+        "y": 0.1,
+        "w": 0.2,
+        "h": 0.1
+      },
+      "box": {
+        "x": 0.8478,
+        "y": 0.1005,
+        "w": 0.1355,
+        "h": 0.0689
+      },
+      "px": {
+        "x": 1276,
+        "y": 105,
+        "w": 204,
+        "h": 72
+      },
+      "aspect": 2.8333,
+      "palette": [
+        {
+          "hex": "#274a3a",
+          "coverage": 0.6613
+        },
+        {
+          "hex": "#f7f7f7",
+          "coverage": 0.2534
+        },
+        {
+          "hex": "#628174",
+          "coverage": 0.0558
+        },
+        {
+          "hex": "#9bb1ac",
+          "coverage": 0.0202
+        },
+        {
+          "hex": "#c9d6ce",
+          "coverage": 0.0092
+        }
+      ],
+      "detail": {
+        "energy": 23.9961
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null
+    },
+    {
+      "id": "inventory-summary",
+      "kind": "text",
+      "note": "Existing device counts and semantic statuses only.",
+      "grid": "A2:J2",
+      "coverBox": {
+        "x": 0,
+        "y": 0.2,
+        "w": 1,
+        "h": 0.1
+      },
+      "box": {
+        "x": 0.0319,
+        "y": 0.2115,
+        "w": 0.1475,
+        "h": 0.0402
+      },
+      "px": {
+        "x": 48,
+        "y": 221,
+        "w": 222,
+        "h": 42
+      },
+      "aspect": 5.2857,
+      "palette": [
+        {
+          "hex": "#f7f7f7",
+          "coverage": 0.8407
+        },
+        {
+          "hex": "#c2c3c3",
+          "coverage": 0.0656
+        },
+        {
+          "hex": "#101e25",
+          "coverage": 0.0396
+        },
+        {
+          "hex": "#4a4f59",
+          "coverage": 0.027
+        },
+        {
+          "hex": "#8c9193",
+          "coverage": 0.027
+        }
+      ],
+      "detail": {
+        "energy": 29.8955
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null,
+      "type": {
+        "comp": {
+          "lines": 1,
+          "glyphs": 12,
+          "capHeightPx": 15.9,
+          "inkIsDark": true,
+          "allCaps": false,
+          "advance": 0.4399,
+          "advTall": 0.4713,
+          "advX": 0.4242,
+          "gap": 0.0943,
+          "xRatio": 0.5207,
+          "stemW": 0.0956,
+          "contrast": 0.8187,
+          "serif": 1.2382,
+          "densTall": 0.3655,
+          "densX": 0.5216,
+          "weight": 0.3655
+        },
+        "widthClass": "condensed",
+        "weightClass": "regular"
+      }
+    },
+    {
+      "id": "approval-section-title",
+      "kind": "text",
+      "note": "Pending approval heading, count, and table column labels.",
+      "grid": "A3:J3",
+      "coverBox": {
+        "x": 0,
+        "y": 0.3,
+        "w": 1,
+        "h": 0.1
+      },
+      "box": {
+        "x": 0.0159,
+        "y": 0.3005,
+        "w": 0.2153,
+        "h": 0.0344
+      },
+      "px": {
+        "x": 24,
+        "y": 314,
+        "w": 324,
+        "h": 36
+      },
+      "aspect": 9,
+      "palette": [
+        {
+          "hex": "#f7f8f6",
+          "coverage": 0.7891
+        },
+        {
+          "hex": "#0b1118",
+          "coverage": 0.0961
+        },
+        {
+          "hex": "#313740",
+          "coverage": 0.0472
+        },
+        {
+          "hex": "#c6cbcb",
+          "coverage": 0.035
+        },
+        {
+          "hex": "#626b6e",
+          "coverage": 0.0326
+        }
+      ],
+      "detail": {
+        "energy": 71.8177
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null,
+      "type": {
+        "comp": {
+          "lines": 1,
+          "glyphs": 22,
+          "capHeightPx": 23.4,
+          "inkIsDark": true,
+          "allCaps": false,
+          "advance": 0.4706,
+          "advTall": 0.5348,
+          "advX": 0.4492,
+          "gap": 0.0856,
+          "xRatio": 0.5463,
+          "stemW": 0.1418,
+          "contrast": 1.1146,
+          "serif": 0.815,
+          "densTall": 0.5113,
+          "densX": 0.6312,
+          "weight": 0.5113
+        },
+        "widthClass": "condensed",
+        "weightClass": "medium"
+      }
+    },
+    {
+      "id": "approval-rows",
+      "kind": "control",
+      "note": "Live pending loan rows with student, VR identifier, request time, view-photo and approve/reject actions. No purpose, duration, or fabricated student data.",
+      "grid": "A4:J5",
+      "codeDrawn": true,
+      "coverBox": {
+        "x": 0,
+        "y": 0.4,
+        "w": 1,
+        "h": 0.2
+      },
+      "box": {
+        "x": 0.8173,
+        "y": 0.4402,
+        "w": 0.1555,
+        "h": 0.0517
+      },
+      "px": {
+        "x": 1230,
+        "y": 460,
+        "w": 234,
+        "h": 54
+      },
+      "aspect": 4.3333,
+      "palette": [
+        {
+          "hex": "#f7f7f6",
+          "coverage": 0.6791
+        },
+        {
+          "hex": "#285242",
+          "coverage": 0.233
+        },
+        {
+          "hex": "#b1c0bd",
+          "coverage": 0.0608
+        },
+        {
+          "hex": "#7a9188",
+          "coverage": 0.0193
+        },
+        {
+          "hex": "#526765",
+          "coverage": 0.0079
+        }
+      ],
+      "detail": {
+        "energy": 23.7974
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null
+    },
+    {
+      "id": "device-section-title",
+      "kind": "text",
+      "note": "Inventory title, count, search and status filter controls.",
+      "grid": "A6:J6",
+      "coverBox": {
+        "x": 0,
+        "y": 0.6,
+        "w": 1,
+        "h": 0.1
+      },
+      "box": {
+        "x": 0.0159,
+        "y": 0.6,
+        "w": 0.2751,
+        "h": 0.0402
+      },
+      "px": {
+        "x": 24,
+        "y": 627,
+        "w": 414,
+        "h": 42
+      },
+      "aspect": 9.8571,
+      "palette": [
+        {
+          "hex": "#f8f8f7",
+          "coverage": 0.8369
+        },
+        {
+          "hex": "#0b1018",
+          "coverage": 0.0618
+        },
+        {
+          "hex": "#273538",
+          "coverage": 0.0379
+        },
+        {
+          "hex": "#60676a",
+          "coverage": 0.0369
+        },
+        {
+          "hex": "#c3c7c7",
+          "coverage": 0.0266
+        }
+      ],
+      "detail": {
+        "energy": 67.0275
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null,
+      "type": {
+        "comp": {
+          "lines": 1,
+          "glyphs": 29,
+          "capHeightPx": 24,
+          "inkIsDark": true,
+          "allCaps": false,
+          "advance": 0.4582,
+          "advTall": 0.5415,
+          "advX": 0.4165,
+          "gap": 0.0833,
+          "xRatio": 0.5014,
+          "stemW": 0.1327,
+          "contrast": 1.1558,
+          "serif": 0.6116,
+          "densTall": 0.4189,
+          "densX": 0.546,
+          "weight": 0.4189
+        },
+        "widthClass": "compressed",
+        "weightClass": "regular"
+      }
+    },
+    {
+      "id": "device-column-heads",
+      "kind": "text",
+      "note": "Actual inventory labels for device number, QR code, status, borrower and recent return.",
+      "grid": "A7:J7",
+      "coverBox": {
+        "x": 0,
+        "y": 0.7,
+        "w": 1,
+        "h": 0.1
+      },
+      "box": {
+        "x": 0.8213,
+        "y": 0.7005,
+        "w": 0.1276,
+        "h": 0.1005
+      },
+      "px": {
+        "x": 1236,
+        "y": 732,
+        "w": 192,
+        "h": 105
+      },
+      "aspect": 1.8286,
+      "palette": [
+        {
+          "hex": "#f6f7f5",
+          "coverage": 0.8466
+        },
+        {
+          "hex": "#c6d2cd",
+          "coverage": 0.0776
+        },
+        {
+          "hex": "#889d95",
+          "coverage": 0.0543
+        },
+        {
+          "hex": "#506a5f",
+          "coverage": 0.0184
+        },
+        {
+          "hex": "#2f4843",
+          "coverage": 0.0031
+        }
+      ],
+      "detail": {
+        "energy": 21.3941
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null
+    },
+    {
+      "id": "device-rows",
+      "kind": "control",
+      "note": "Live device inventory rows and contextual actions; omit model, type and QR image fields absent from the product.",
+      "grid": "A7:J9",
+      "codeDrawn": true,
+      "coverBox": {
+        "x": 0,
+        "y": 0.7,
+        "w": 1,
+        "h": 0.3
+      },
+      "box": {
+        "x": 0.8199,
+        "y": 0.7005,
+        "w": 0.1515,
+        "h": 0.289
+      },
+      "px": {
+        "x": 1234,
+        "y": 732,
+        "w": 228,
+        "h": 302
+      },
+      "aspect": 0.755,
+      "palette": [
+        {
+          "hex": "#f6f7f5",
+          "coverage": 0.9031
+        },
+        {
+          "hex": "#7d948c",
+          "coverage": 0.0397
+        },
+        {
+          "hex": "#b0bfbc",
+          "coverage": 0.0391
+        },
+        {
+          "hex": "#486159",
+          "coverage": 0.018
+        }
+      ],
+      "detail": {
+        "energy": 20.8843
+      },
+      "medium": "semantic",
+      "plate": null,
+      "text": null
+    }
+  ]
+}

@@ -20,17 +20,21 @@ export const USER_TABS = [
 ] as const;
 
 export const STATUS_LABEL = {
-  good: "ปกติ",
-  minor_damage: "มีตำหนิ",
+  good: "พร้อมใช้",
+  damaged: "ชำรุด",
+  pending_approval: "รออนุมัติ",
+  minor_damage: "ชำรุด",
   major_damage: "ชำรุด",
   borrowed: "ยืม",
 };
 
 export const STATUS_COLOR = {
   good: "bg-emerald-100 text-emerald-700",
-  minor_damage: "bg-yellow-100 text-yellow-700",
-  major_damage: "bg-red-100 text-red-700",
-  borrowed: "bg-blue-100 text-blue-700",
+  damaged: "bg-gray-200 text-gray-700",
+  pending_approval: "bg-yellow-100 text-yellow-800",
+  minor_damage: "bg-gray-200 text-gray-700",
+  major_damage: "bg-gray-200 text-gray-700",
+  borrowed: "bg-red-100 text-red-800",
 };
 
 export const LOCATION_LABEL: Record<IVR["locationType"], string> = {

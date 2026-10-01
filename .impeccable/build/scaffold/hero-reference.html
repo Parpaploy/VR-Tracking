@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Scaffold reference: dashboard-a.png</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Are+You+Serious:wght@400&family=Sansita+Swashed:wght@400&display=swap">
+  <link rel="stylesheet" href="layout.css">
+  <style>html,body{margin:0}body{background:#f7f7f5}.region{box-sizing:border-box}.region.text p{white-space:pre-wrap}</style>
+</head>
+<body>
+<!-- Reference only. Every region sits at its measured box inside a comp-aspect frame. Take the boxes (layout.css), keep your own semantic structure. -->
+<main class="comp-frame" style="max-width:1505px">
+  <div class="r-product-wordmark region text" data-region="product-wordmark"><!-- Replace the invented university name and seal with the VR Tracker product name only. --><p style="font-size:var(--r-product-wordmark-font);font-family:var(--r-product-wordmark-family),sans-serif;font-weight:var(--r-product-wordmark-weight);line-height:1.05;margin:0">product-wordmark</p></div>
+  <div class="r-admin-navigation region control" data-region="admin-navigation"><!-- Compact tab navigation for the actual admin routes; omit fabricated report and notification destinations.: rebuild the control's chrome from the crop (comp-spec.mjs --crop admin-navigation); its ink box, border, fill, radius, and label size are the comp's --></div>
+  <div class="r-dashboard-title region text" data-region="dashboard-title"><!-- Dashboard title and short purpose line. --><p style="font-size:var(--r-dashboard-title-font);font-family:var(--r-dashboard-title-family),sans-serif;font-weight:var(--r-dashboard-title-weight);line-height:1.05;margin:0">dashboard-title</p></div>
+  <div class="r-return-scan-action region control" data-region="return-scan-action"><!-- Action to open the existing QR return workflow.: rebuild the control's chrome from the crop (comp-spec.mjs --crop return-scan-action); its ink box, border, fill, radius, and label size are the comp's --></div>
+  <div class="r-inventory-summary region text" data-region="inventory-summary"><!-- Existing device counts and semantic statuses only. --><p style="font-size:var(--r-inventory-summary-font);line-height:1.05;margin:0">inventory-summary</p></div>
+  <div class="r-approval-section-title region text" data-region="approval-section-title"><!-- Pending approval heading, count, and table column labels. --><p style="font-size:var(--r-approval-section-title-font);line-height:1.05;margin:0">approval-section-title</p></div>
+  <div class="r-approval-rows region control" data-region="approval-rows"><!-- Live pending loan rows with student, VR identifier, request time, view-photo and approve/reject actions. No purpose, duration, or fabricated student data.: rebuild the control's chrome from the crop (comp-spec.mjs --crop approval-rows); its ink box, border, fill, radius, and label size are the comp's --></div>
+  <div class="r-device-section-title region text" data-region="device-section-title"><!-- Inventory title, count, search and status filter controls. --><p style="font-size:var(--r-device-section-title-font);line-height:1.05;margin:0">device-section-title</p></div>
+  <div class="r-device-column-heads region text" data-region="device-column-heads"><!-- Actual inventory labels for device number, QR code, status, borrower and recent return. --><p style="line-height:1.05;margin:0">device-column-heads</p></div>
+  <div class="r-device-rows region control" data-region="device-rows"><!-- Live device inventory rows and contextual actions; omit model, type and QR image fields absent from the product.: rebuild the control's chrome from the crop (comp-spec.mjs --crop device-rows); its ink box, border, fill, radius, and label size are the comp's --></div>
+</main>
+</body>
+</html>

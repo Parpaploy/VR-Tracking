@@ -15,7 +15,10 @@ export interface IVRPhoto {
 export interface IVR {
   photos?: IVRPhoto[];
   id: string;
-  status: "good" | "minor_damage" | "major_damage" | "borrowed";
+  status: "good" | "damaged" | "pending_approval" | "minor_damage" | "major_damage" | "borrowed";
+  statusSource?: "admin" | "user_loan" | null;
+  adminBorrowerId?: string | null;
+  adminBorrowerName?: string | null;
   locationType: "store" | "truck" | "warehouse";
   locationId: string;
   updatedAt: Timestamp | null;
