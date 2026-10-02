@@ -1115,7 +1115,7 @@ export default function VRManagementPage() {
                   className="w-full flex items-center gap-3 bg-white border border-black/[0.07] px-5 py-3 rounded-[10px]"
                 >
                   <div className="flex-1 min-w-0">
-                    <p className="font-bold truncate">{g.id}</p>
+                    <p className="font-mono font-bold truncate">{g.id}</p>
                     <p className="text-sm text-black/40">
                       <span className="font-bold">
                         {LOCATION_LABEL[g.locationType]}
@@ -1577,7 +1577,7 @@ export default function VRManagementPage() {
             <div className="w-full">
               <h2 className="text-[24px] font-bold">แก้ไขสถานะอุปกรณ์ VR</h2>
               <p className="text-[16px] text-black/50 mb-1">
-                รหัสอุปกรณ์ VR: <span className="font-bold">{selectedVR.id}</span>
+                รหัสอุปกรณ์ VR: <span className="font-mono font-bold">{selectedVR.id}</span>
               </p>
 
               <button

@@ -1,0 +1,11 @@
+<svg width="273" height="273" viewBox="0 0 273 273" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="273" height="273" rx="83" fill="#2C2F6F"/>
+<rect x="25" y="121" width="13" height="38" rx="2" fill="#E9E9E9"/>
+<rect x="155" y="68" width="17" height="38" rx="2" transform="rotate(90 155 68)" fill="#E9E9E9"/>
+<rect x="234" y="121" width="13" height="38" rx="2" fill="#E9E9E9"/>
+<path d="M95.5 83H177.5C209.809 83 236 109.191 236 141.5C236 173.809 209.809 200 177.5 200H95.5C63.1913 200 37 173.809 37 141.5C37 109.191 63.1913 83 95.5 83Z" fill="white" stroke="black" stroke-width="8"/>
+<path d="M95.5 93.5H177.5C204.01 93.5 225.5 114.99 225.5 141.5C225.5 168.01 204.01 189.5 177.5 189.5H95.5C68.9903 189.5 47.5 168.01 47.5 141.5C47.5 114.99 68.9903 93.5 95.5 93.5Z" fill="white" stroke="#E9E9E9" stroke-width="3"/>
+<rect x="143" y="173" width="15" height="32" rx="7.5" transform="rotate(-180 143 173)" fill="black"/>
+<rect x="116" y="173" width="15" height="32" rx="7.5" transform="rotate(-180 116 173)" fill="black"/>
+<rect x="170" y="173" width="15" height="32" rx="7.5" transform="rotate(-180 170 173)" fill="black"/>
+</svg>

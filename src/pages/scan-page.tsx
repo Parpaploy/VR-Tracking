@@ -239,7 +239,7 @@ export default function VRScanPage() {
                 <div className="space-y-3">
                   <div className="flex justify-between items-center border-b pb-2">
                     <span className="text-gray-500">รหัสอุปกรณ์ VR</span>
-                    <span className="font-bold">{vr.id}</span>
+                    <span className="font-mono font-bold">{vr.id}</span>
                   </div>
                   <div className="flex justify-between items-center border-b pb-2">
                     <span className="text-gray-500">สถานะ</span>

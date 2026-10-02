@@ -62,7 +62,7 @@ function toDate(value: unknown): string | null {
   return typeof value === 'string' ? value : null;
 }
 
-function toLoan(id: string, data: Record<string, unknown>): Loan {
+export function toLoan(id: string, data: Record<string, unknown>): Loan {
   return {
     id,
     deviceId: String(data.deviceId ?? ''),
@@ -83,7 +83,7 @@ function toLoan(id: string, data: Record<string, unknown>): Loan {
   };
 }
 
-function normalizedDevice(data: Record<string, unknown> & { id: string }): Device {
+export function normalizedDevice(data: Record<string, unknown> & { id: string }): Device {
   const status = String(data.status ?? 'good') as DeviceStatus;
   const activeLoanId = typeof data.activeLoanId === 'string' ? data.activeLoanId : null;
   const pendingLoanId = typeof data.pendingLoanId === 'string' ? data.pendingLoanId : null;

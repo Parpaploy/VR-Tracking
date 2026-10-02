@@ -512,7 +512,7 @@ export default function UserManagementPage() {
                       </div>
                       <p className="mb-3">({u.nickname})</p>
                       <p className="text-black/30">เบอร์โทร: {u.phone}</p>
-                      {u.studentId && <p className="text-black/30">รหัสนักศึกษา: {u.studentId}</p>}
+                      {u.studentId && <p className="text-black/30">รหัสนักศึกษา: <span className="font-mono">{u.studentId}</span></p>}
                       {u.studentEmail && <p className="break-all text-black/30">อีเมลนักศึกษา: {u.studentEmail}</p>}
                     </div>
 

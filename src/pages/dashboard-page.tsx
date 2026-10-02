@@ -3,8 +3,10 @@ import { Link } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import { loanImage, loanRequest } from '../lib/loans.services';
 import type { ActiveUser, Device, DeviceStatus, Loan, LoanStatus } from '../lib/loans.services';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import { normalizedDevice, toLoan } from '../lib/loans.services';
+import { IoIosArrowDown, IoIosArrowUp } from 'react-icons/io';
 
 type Filter = 'all' | 'pending_approval' | 'borrowed' | 'good' | 'damaged';
 const date = (value: string | null) => value ? new Date(value).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' }) : '—';
@@ -34,6 +36,8 @@ export default function DashboardPage() {
   const [devices, setDevices] = useState<Device[]>([]);
   const [users, setUsers] = useState<ActiveUser[]>([]);
   const [openDeviceId, setOpenDeviceId] = useState<string | null>(null);
+  const [devicesExpanded, setDevicesExpanded] = useState(true);
+  const [historyExpanded, setHistoryExpanded] = useState(true);
   const [code, setCode] = useState('');
   const [newDeviceNumber, setNewDeviceNumber] = useState('');
   const [numberChoice, setNumberChoice] = useState<Record<string, string>>({});
@@ -53,6 +57,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     let active = true;
+    const previousDevices = new Map<string, Device>();
     setLoading(true);
     setLoansLoading(true);
     setUsersLoading(true);
@@ -60,32 +65,54 @@ export default function DashboardPage() {
     const failed = (section: string, reason: unknown) => {
       if (active) setLoadErrors(previous => ({ ...previous, [section]: reason instanceof Error ? reason.message : 'กรุณาลองใหม่' }));
     };
-    void loanRequest<{ devices: Device[] }>('/devices').then(deviceData => {
+    const onError = (section: string, loadingDone?: () => void) => (reason: Error) => {
+      failed(section, reason);
+      loadingDone?.();
+    };
+    const stopDevices = onSnapshot(collection(db, 'gas'), snap => {
       if (!active) return;
-      setDevices(deviceData.devices);
-      setNumberChoice(Object.fromEntries(deviceData.devices.map(item => [item.id, item.deviceNumber ?? ''])));
-      setStatusChoice(Object.fromEntries(deviceData.devices.map(item => [item.id, deviceStatus(item)])));
-      setBorrowerChoice(Object.fromEntries(deviceData.devices.map(item => [item.id, item.adminBorrowerId ?? ''])));
-    }).catch(reason => failed('รายการ VR', reason))
-      .finally(() => { if (active) setLoading(false); });
-    void loanRequest<{ loans: Loan[] }>('/loans').then(data => {
-      if (active) setLoans(data.loans);
-    }).catch(reason => failed('ประวัติยืม', reason))
-      .finally(() => { if (active) setLoansLoading(false); });
-    void getDocs(collection(db, 'transactions')).then(snap => {
+      const nextDevices = snap.docs.map(item => normalizedDevice({ ...item.data(), id: item.id }));
+      setDevices(nextDevices);
+      setNumberChoice(previous => Object.fromEntries(nextDevices.map(item => [item.id, previousDevices.has(item.id) && previous[item.id] !== previousDevices.get(item.id)?.deviceNumber ? previous[item.id] : item.deviceNumber ?? ''])));
+      setStatusChoice(previous => Object.fromEntries(nextDevices.map(item => {
+        const old = previousDevices.get(item.id);
+        return [item.id, old && previous[item.id] !== deviceStatus(old) ? previous[item.id] : deviceStatus(item)];
+      })));
+      setBorrowerChoice(previous => Object.fromEntries(nextDevices.map(item => {
+        const old = previousDevices.get(item.id);
+        return [item.id, old && previous[item.id] !== (old.adminBorrowerId ?? '') ? previous[item.id] : item.adminBorrowerId ?? ''];
+      })));
+      previousDevices.clear();
+      nextDevices.forEach(item => previousDevices.set(item.id, item));
+      setLoading(false);
+    }, onError('รายการ VR', () => setLoading(false)));
+    const stopLoans = onSnapshot(collection(db, 'loans'), snap => {
+      if (!active) return;
+      setLoans(snap.docs.map(item => toLoan(item.id, item.data()))
+        .sort((a, b) => (b.requestedAt ?? '').localeCompare(a.requestedAt ?? '')));
+      setLoansLoading(false);
+    }, onError('ประวัติยืม', () => setLoansLoading(false)));
+    const stopStatusChanges = onSnapshot(query(collection(db, 'transactions'), where('eventType', '==', 'status_change')), snap => {
       if (!active) return;
       const changes = snap.docs.flatMap(item => {
         const d = item.data();
-        if (d.eventType !== 'status_change' || typeof d.gasId !== 'string') return [];
+        if (typeof d.gasId !== 'string') return [];
         return [{ id: item.id, gasId: d.gasId, fromStatus: String(d.fromStatus ?? ''), toStatus: String(d.toStatus ?? ''), borrowerName: String(d.borrowerName ?? ''), performedBy: String(d.performedBy ?? ''), createdAt: timestampToIso(d.createdAt) }];
       });
       setStatusChanges(changes.sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? '')));
-    }).catch(reason => failed('ประวัติเปลี่ยนสถานะ', reason));
-    void loanRequest<{ users: ActiveUser[] }>('/users').then(data => {
-      if (active) setUsers(data.users);
-    }).catch(reason => failed('รายชื่อผู้ใช้', reason))
-      .finally(() => { if (active) setUsersLoading(false); });
-    return () => { active = false; };
+    }, onError('ประวัติเปลี่ยนสถานะ'));
+    const stopUsers = onSnapshot(query(collection(db, 'users'), where('status', '==', 'active')), snap => {
+      if (!active) return;
+      setUsers(snap.docs.map(item => ({ id: item.id, name: String(item.data().name ?? ''), nickname: String(item.data().nickname ?? ''), role: item.data().role === 'admin' ? 'admin' : 'user' })));
+      setUsersLoading(false);
+    }, onError('รายชื่อผู้ใช้', () => setUsersLoading(false)));
+    return () => {
+      active = false;
+      stopDevices();
+      stopLoans();
+      stopStatusChanges();
+      stopUsers();
+    };
   }, [refresh]);
 
   async function add(e: React.FormEvent) {
@@ -245,8 +272,12 @@ export default function DashboardPage() {
 
       <section className="rounded-2xl border bg-white p-4 sm:p-5">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-lg font-bold">รายการอุปกรณ์</h2><p className="text-sm text-slate-500">คำขอยืมจะยังไม่ถือว่ายืมจนกว่าแอดมินอนุมัติ</p></div>
-          <button onClick={() => setRefresh(value => value + 1)} disabled={busy} className="rounded-lg border px-3 py-2 text-sm disabled:opacity-50">{loading ? 'กำลังโหลด · ลองใหม่' : 'รีเฟรชข้อมูล'}</button>
+          <div className="flex gap-2">
+            <button type="button" aria-expanded={devicesExpanded} aria-controls="device-list-content" onClick={() => setDevicesExpanded(value => !value)} className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold">{devicesExpanded ? <><IoIosArrowUp aria-hidden="true" />ซ่อนรายการ</> : <><IoIosArrowDown aria-hidden="true" />แสดงรายการ</>}</button>
+            <button onClick={() => setRefresh(value => value + 1)} disabled={busy} className="rounded-lg border px-3 py-2 text-sm disabled:opacity-50">{loading ? 'กำลังโหลด · ลองใหม่' : 'รีเฟรชข้อมูล'}</button>
+          </div>
         </div>
+        {devicesExpanded && <div id="device-list-content">
         <form onSubmit={add} className="mb-5 flex flex-wrap gap-2 rounded-xl bg-slate-50 p-3">
           <input aria-label="รหัส VR ใหม่" required maxLength={64} placeholder="เพิ่มรหัส VR เช่น VR-001" value={code} onChange={e => setCode(e.target.value.toUpperCase())} className="min-w-0 flex-1 basis-48 rounded-xl border p-3" />
           <input aria-label="เบอร์เครื่อง VR ใหม่ (ไม่จำเป็น)" maxLength={64} placeholder="เบอร์เครื่อง (ไม่จำเป็น)" value={newDeviceNumber} onChange={e => setNewDeviceNumber(e.target.value)} className="min-w-0 flex-1 basis-48 rounded-xl border p-3" />
@@ -271,7 +302,7 @@ export default function DashboardPage() {
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <h3 className="break-words text-2xl font-bold">{device.deviceNumber || 'ยังไม่ระบุเบอร์'}</h3>
-                  <p className="mt-1 break-all text-xs text-slate-500">{device.id}</p>
+                  <p className="mt-1 break-all font-mono text-xs text-slate-500">{device.id}</p>
                 </div>
                 <div className="flex shrink-0 items-center gap-1">
                   <span className="rounded-full bg-white/80 px-2.5 py-1 text-xs font-semibold">{deviceLabel(status)}</span>
@@ -311,10 +342,15 @@ export default function DashboardPage() {
           })}
         </div>}
         <p className="mt-3 text-right text-sm text-slate-500">แสดง {visibleDevices.length} จาก {devices.length} เครื่อง</p>
+        </div>}
       </section>
 
       <section id="loan-history" className="rounded-2xl border bg-white p-4 sm:p-5">
-        <h2 className="text-lg font-bold">คำขอยืมและประวัติ</h2><p className="mb-4 text-sm text-slate-500">ตรวจรูปและอนุมัติคำขอก่อนให้ผู้ใช้ยืม VR</p>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+          <div><h2 className="text-lg font-bold">คำขอยืมและประวัติ</h2><p className="text-sm text-slate-500">ตรวจรูปและอนุมัติคำขอก่อนให้ผู้ใช้ยืม VR</p></div>
+          <button type="button" aria-expanded={historyExpanded} aria-controls="loan-history-content" onClick={() => setHistoryExpanded(value => !value)} className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold">{historyExpanded ? <><IoIosArrowUp aria-hidden="true" />ซ่อนประวัติ</> : <><IoIosArrowDown aria-hidden="true" />แสดงประวัติ</>}</button>
+        </div>
+        {historyExpanded && <div id="loan-history-content">
         {historyRows.length === 0 ? <p className="py-5 text-center text-slate-500">{loansLoading ? 'กำลังโหลดประวัติยืม…' : loadErrors['ประวัติยืม'] || loadErrors['ประวัติเปลี่ยนสถานะ'] ? 'ยังโหลดประวัติไม่สำเร็จ' : 'ยังไม่มีรายการ'}</p> : <div className="overflow-x-auto"><table className="loan-history-table w-full text-left text-sm"><thead><tr className="border-b text-slate-500"><th className="p-3">รหัส VR</th><th className="p-3">เบอร์เครื่อง</th><th className="p-3">ผู้ใช้</th><th className="p-3">รูป selfie</th><th className="p-3">สถานะ</th><th className="p-3">ส่งคำขอ</th><th className="p-3">ยืมสำเร็จ</th><th className="p-3">คืน</th><th className="p-3">การดำเนินการ</th></tr></thead><tbody>{historyRows.map(row => {
           if (row.kind === 'status') {
           const { item } = row;
@@ -322,7 +358,7 @@ export default function DashboardPage() {
           const statusLabel = (status: string) => ({ good: 'พร้อมใช้', damaged: 'ชำรุด', minor_damage: 'ชำรุด', major_damage: 'ชำรุด', borrowed: 'ยืม' }[status] ?? status);
           const actor = users.find(user => user.id === item.performedBy);
           return <tr key={`status-${item.id}`} className="border-b last:border-0 bg-indigo-50/40">
-            <td data-label="รหัส VR" className="p-3 font-bold">{item.gasId}</td>
+            <td data-label="รหัส VR" className="p-3 font-mono font-bold">{item.gasId}</td>
             <td data-label="เบอร์เครื่อง" className="p-3">{device?.deviceNumber?.trim() || 'ไม่ระบุ'}</td>
             <td data-label="ผู้ใช้" className="p-3">{item.borrowerName || '—'}</td>
             <td data-label="รูป selfie" className="p-3">—</td>
@@ -345,7 +381,7 @@ export default function DashboardPage() {
                 ? `อนุมัติโดย ${operator?.nickname || operator?.name || 'แอดมิน'}`
                 : loan.approvalSource === 'admin' ? 'บันทึกโดยแอดมิน' : '—';
           return <tr key={loan.id} className="border-b last:border-0">
-            <td data-label="รหัส VR" className="p-3 font-bold">{loan.deviceId}</td>
+            <td data-label="รหัส VR" className="p-3 font-mono font-bold">{loan.deviceId}</td>
             <td data-label="เบอร์เครื่อง" className="p-3">{deviceNumber || 'ไม่ระบุ'}</td>
             <td data-label="ผู้ใช้" className="p-3">{loan.borrowerName}</td>
             <td data-label="รูป selfie" className="p-3"><button type="button" onClick={() => void viewSelfie(loan)} disabled={selfieLoadingId === loan.id} className="rounded-lg border px-3 py-2 text-xs font-semibold text-blue-800 disabled:opacity-50">{selfieLoadingId === loan.id ? 'กำลังโหลด…' : 'ดูรูป'}</button></td>
@@ -356,6 +392,7 @@ export default function DashboardPage() {
             <td data-label="การดำเนินการ" className="p-3">{loan.status === 'pending_approval' ? <div className="flex gap-2"><button type="button" disabled={busy} onClick={() => void reviewLoan(loan, 'approve')} className="rounded bg-emerald-700 px-2 py-1 text-white">อนุมัติ</button><button type="button" disabled={busy} onClick={() => void reviewLoan(loan, 'reject')} className="rounded bg-gray-700 px-2 py-1 text-white">ปฏิเสธ</button></div> : <span>{operation}</span>}</td>
           </tr>;
         })}</tbody></table></div>}
+        </div>}
       </section>
     </div>
     {selectedSelfie && <div role="dialog" aria-modal="true" aria-label="รูป selfie ตอนยืม" onClick={() => { URL.revokeObjectURL(selectedSelfie.url); setSelectedSelfie(null); }} className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"><div onClick={e => e.stopPropagation()} className="max-h-[90vh] max-w-3xl rounded-2xl bg-white p-4 shadow-xl"><div className="mb-3 flex items-center justify-between gap-4"><div><h2 className="font-bold">รูปตอนยืม {selectedSelfie.loan.deviceId}</h2><p className="text-sm text-slate-500">{selectedSelfie.loan.borrowerName} · {date(selectedSelfie.loan.requestedAt)}</p></div><button type="button" onClick={() => { URL.revokeObjectURL(selectedSelfie.url); setSelectedSelfie(null); }} aria-label="ปิดรูป" className="rounded-lg border px-3 py-2">ปิด</button></div><img src={selectedSelfie.url} alt={`รูป selfie ตอนยืม ${selectedSelfie.loan.deviceId}`} className="max-h-[75vh] max-w-full rounded-xl object-contain" /></div></div>}

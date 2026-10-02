@@ -20,15 +20,17 @@ colors:
   focus: "#7779b3"
 typography:
   body:
-    fontFamily: "Noto Sans Thai, Leelawadee UI, Thonburi, Tahoma, system-ui, sans-serif"
+    fontFamily: "Space Grotesk, IBM Plex Sans Thai, Leelawadee UI, Thonburi, Tahoma, system-ui, sans-serif"
     lineHeight: 1.6
+  identifiers:
+    fontFamily: "IBM Plex Mono, IBM Plex Sans Thai, monospace"
   page-heading:
-    fontFamily: "Noto Sans Thai, Leelawadee UI, Thonburi, Tahoma, system-ui, sans-serif"
+    fontFamily: "Space Grotesk, IBM Plex Sans Thai, Leelawadee UI, Thonburi, Tahoma, system-ui, sans-serif"
     fontSize: "clamp(26px, 3vw, 34px)"
     fontWeight: 720
     lineHeight: 1.35
   label:
-    fontFamily: "Noto Sans Thai, Leelawadee UI, Thonburi, Tahoma, system-ui, sans-serif"
+    fontFamily: "Space Grotesk, IBM Plex Sans Thai, Leelawadee UI, Thonburi, Tahoma, system-ui, sans-serif"
     fontSize: "12px"
     fontWeight: 650
 rounded:
@@ -88,10 +90,11 @@ The palette pairs warm, low-contrast paper neutrals with a single indigo interfa
 
 ## Typography
 
-**Display Font:** Noto Sans Thai (with Leelawadee UI, Thonburi, Tahoma, system sans-serif fallbacks)
-**Body Font:** Noto Sans Thai (with Leelawadee UI, Thonburi, Tahoma, system sans-serif fallbacks)
+**Latin Font:** Space Grotesk (weights 500–700)
+**Thai Font:** IBM Plex Sans Thai (weights 400–700)
+**Data Font:** IBM Plex Mono (weights 400–600) for device and student identifiers
 
-**Character:** A practical sans-serif voice keeps Thai labels, device identifiers, and actions legible. Headings use a compact, medium-bold hierarchy rather than a separate display face.
+**Character:** Space Grotesk carries Latin text, with IBM Plex Sans Thai supplying Thai glyphs. IBM Plex Mono distinguishes device and student identifiers while keeping the register easy to scan.
 
 ### Hierarchy
 - **Page heading** (weight 720, responsive 26–34px, line-height 1.35): The primary title for each page.

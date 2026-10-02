@@ -85,7 +85,7 @@ export const LocationDetailPopup = ({
                 key={g.id}
                 className="flex items-center justify-between px-4 py-2 rounded-[10px] border border-black/[0.07]"
               >
-                <p className="font-bold text-[16px]">{g.id}</p>
+                <p className="font-mono font-bold text-[16px]">{g.id}</p>
                 <span
                   className={`text-[13px] font-bold px-3 py-1 rounded-full ${STATUS_COLOR[g.status]}`}
                 >

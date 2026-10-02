@@ -1,4 +1,3 @@
-import { LuGlasses } from "react-icons/lu";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { fetchAndVerifyPin } from "../lib/auth.services";
@@ -29,20 +28,21 @@ export default function LoginPage() {
   return (
     <main className="auth-page">
       <section className="auth-story">
-        <div className="brand">
+        <div className="flex justify-start items-center gap-2">
           <span className="brand-icon">
-            <LuGlasses size={25} />
+            <img src="/vr.svg" alt="" />
           </span>
-          <span>
-            VR Tracker<small>ระบบยืม–คืนอุปกรณ์ VR</small>
-          </span>
+          <div className="flex flex-col justify-center items-start">
+            <p className="-mb-1.5">ICAT VR Tracker</p>
+            <p>ระบบยืม–คืนอุปกรณ์ VR</p>
+          </div>
         </div>
 
         <p className="story-description">
-          ยืมอุปกรณ์ VR ได้ง่าย ๆ สแกน แนบรูป และติดตามคำขอของคุณได้ในที่เดียว
+          ยืมอุปกรณ์ VR ได้ง่าย ๆ สแกน แนบรูป และติดตามคำขอได้ในที่เดียว
         </p>
         <div className="auth-graphic" aria-hidden="true">
-          <LuGlasses />
+          <img src="/vr-nobg.svg" alt="" />
         </div>
 
         <footer>สแกน QR · ส่งคำขอ · รออนุมัติ · พร้อมใช้งาน</footer>
@@ -86,7 +86,7 @@ export default function LoginPage() {
               {busy ? "กำลังเข้าสู่ระบบ…" : "เข้าสู่ระบบ"}
             </button>
             <p className="text-center text-sm text-slate-500">
-              ยังไม่มีบัญชี?{" "}
+              ยังไม่มีบัญชี?
               <Link className="font-semibold" to="/register">
                 สมัครสมาชิก
               </Link>
