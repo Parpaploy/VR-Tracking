@@ -2,9 +2,6 @@ import { VRPhotos } from "../components/vr-photos";
 import { Html5Qrcode, Html5QrcodeScannerState } from "html5-qrcode";
 import { useEffect, useRef, useState } from "react";
 import {
-  doc,
-  getDocFromCache,
-  getDocFromServer,
   collection,
   query,
   where,
@@ -19,6 +16,7 @@ import { fetchTrucks } from "../lib/truck.services";
 import { fetchWarehouses } from "../lib/warehouses.services";
 import { fetchUsers } from "../lib/auth.services";
 import { updateVRStatus } from "../lib/vr.services";
+import { findDeviceByCode } from "../lib/loans.services";
 import type {
   IVR,
   IVRTransaction,
@@ -86,24 +84,8 @@ export default function VRScanPage() {
     setShowPopup(true);
 
     try {
-      const ref = doc(db, "gas", gasId);
-      let vrData: IVR | null = null;
-
-      try {
-        const cacheSnap = await getDocFromCache(ref);
-        if (cacheSnap.exists()) {
-          vrData = { id: cacheSnap.id, ...cacheSnap.data() } as IVR;
-        }
-      } catch {
-        //
-      }
-
-      if (!vrData) {
-        const snap = await getDocFromServer(ref);
-        if (snap.exists()) {
-          vrData = { id: snap.id, ...snap.data() } as IVR;
-        }
-      }
+      const resolved = await findDeviceByCode(gasId);
+      const vrData = resolved ? { ...resolved, id: resolved.id } as unknown as IVR : null;
 
       setVR(vrData);
       if (vrData) setNewStatus(vrData.status === "good" || vrData.status === "borrowed" || vrData.status === "pending_approval" ? vrData.status : "damaged");
@@ -112,7 +94,7 @@ export default function VRScanPage() {
         try {
           const q = query(
             collection(db, "transactions"),
-            where("gasId", "==", gasId),
+            where("gasId", "==", vrData.id),
             orderBy("createdAt", "desc"),
             limit(1),
           );
@@ -239,7 +221,7 @@ export default function VRScanPage() {
                 <div className="space-y-3">
                   <div className="flex justify-between items-center border-b pb-2">
                     <span className="text-gray-500">รหัสอุปกรณ์</span>
-                    <span className="font-mono font-bold">{vr.id}</span>
+                    <span className="font-mono font-bold">{vr.deviceCode || vr.id}</span>
                   </div>
                   <div className="flex justify-between items-center border-b pb-2">
                     <span className="text-gray-500">สถานะ</span>

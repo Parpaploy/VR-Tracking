@@ -70,8 +70,8 @@ export default function Homepage() {
   }
   function acceptScan(value: string) {
     const scanned = value.trim().toUpperCase();
-    if (!/^[A-Z0-9][A-Z0-9_-]{0,63}$/.test(scanned)) {
-      setError('QR นี้ไม่ใช่รหัสอุปกรณ์ กรุณาสแกน QR บนอุปกรณ์');
+    if (!scanned || scanned.length > 64 || /[\u0000-\u001F\u007F]/.test(scanned)) {
+      setError('QR นี้ไม่มีรหัสอุปกรณ์ที่ใช้ได้ กรุณาสแกน QR บนอุปกรณ์');
       return;
     }
     setCode(scanned); setError(''); setMessage(`สแกนรหัส ${scanned} แล้ว ตรวจสอบรหัสและแนบ selfie เพื่อยืม`);
@@ -112,7 +112,7 @@ export default function Homepage() {
     {message && <p role="status" className="text-green-700">{message}</p>}
     </div><section className="surface space-y-4"><h2 className="font-bold text-xl">รายการยืมของฉัน</h2>
       {!loans.length && <p className="text-gray-500">ยังไม่มีรายการยืม</p>}
-      {loans.map(l => <article key={l.id} className={`border rounded-xl p-3 ${l.status === 'pending_approval' ? 'bg-yellow-50 border-yellow-300' : l.status === 'borrowed' ? 'bg-red-50 border-red-200' : l.status === 'rejected' ? 'bg-gray-100 border-gray-300' : ''}`}><b className="font-mono">{l.deviceId}</b><p className="font-medium">{l.status === 'pending_approval' ? 'รอแอดมินอนุมัติ' : l.status === 'borrowed' ? 'ถูกยืม · รอแอดมินรับคืน' : l.status === 'rejected' ? 'คำขอไม่อนุมัติ' : 'คืนแล้ว'}</p><p className="text-xs text-gray-500">ส่งคำขอ {l.requestedAt ? new Date(l.requestedAt).toLocaleString('th-TH') : '-'}</p>{l.borrowedAt && <p className="text-xs text-gray-500">อนุมัติให้ยืม {new Date(l.borrowedAt).toLocaleString('th-TH')}</p>}{l.returnedAt && <p className="text-xs text-gray-500">คืน {new Date(l.returnedAt).toLocaleString('th-TH')}</p>}</article>)}
+      {loans.map(l => <article key={l.id} className={`border rounded-xl p-3 ${l.status === 'pending_approval' ? 'bg-yellow-50 border-yellow-300' : l.status === 'borrowed' ? 'bg-red-50 border-red-200' : l.status === 'rejected' ? 'bg-gray-100 border-gray-300' : ''}`}><b className="font-mono">{l.deviceCode || l.deviceId}</b><p className="font-medium">{l.status === 'pending_approval' ? 'รอแอดมินอนุมัติ' : l.status === 'borrowed' ? 'ถูกยืม · รอแอดมินรับคืน' : l.status === 'rejected' ? 'คำขอไม่อนุมัติ' : 'คืนแล้ว'}</p><p className="text-xs text-gray-500">ส่งคำขอ {l.requestedAt ? new Date(l.requestedAt).toLocaleString('th-TH') : '-'}</p>{l.borrowedAt && <p className="text-xs text-gray-500">อนุมัติให้ยืม {new Date(l.borrowedAt).toLocaleString('th-TH')}</p>}{l.returnedAt && <p className="text-xs text-gray-500">คืน {new Date(l.returnedAt).toLocaleString('th-TH')}</p>}</article>)}
     </section></div>
   </main>;
 }

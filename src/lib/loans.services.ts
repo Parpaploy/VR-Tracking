@@ -16,6 +16,7 @@ export type DeviceStatus = 'good' | 'damaged' | 'pending_approval' | 'borrowed' 
 export interface Loan {
   id: string;
   deviceId: string;
+  deviceCode?: string;
   borrowerId: string;
   borrowerName: string;
   status: LoanStatus;
@@ -31,6 +32,7 @@ export interface Loan {
 }
 export interface Device {
   id: string;
+  deviceCode: string;
   name?: string;
   notes?: string;
   category?: 'vr' | 'computer' | 'monitor' | 'other';
@@ -73,6 +75,7 @@ export function toLoan(id: string, data: Record<string, unknown>): Loan {
   return {
     id,
     deviceId: String(data.deviceId ?? ''),
+    deviceCode: typeof data.deviceCode === 'string' ? data.deviceCode : undefined,
     borrowerId: String(data.borrowerId ?? ''),
     borrowerName: String(data.borrowerName ?? ''),
     status: (['pending_approval', 'borrowed', 'returned', 'rejected'].includes(String(data.status))
@@ -102,6 +105,7 @@ export function normalizedDevice(data: Record<string, unknown> & { id: string })
   return {
     ...data,
     id: data.id,
+    deviceCode: typeof data.deviceCode === 'string' ? data.deviceCode : data.id,
     deviceNumber,
     status,
     activeLoanId,
@@ -112,6 +116,21 @@ export function normalizedDevice(data: Record<string, unknown> & { id: string })
     adminBorrowerId: typeof data.adminBorrowerId === 'string' ? data.adminBorrowerId : null,
     adminBorrowerName: typeof data.adminBorrowerName === 'string' ? data.adminBorrowerName : null,
   };
+}
+
+export async function findDeviceByCode(code: string): Promise<Device | null> {
+  const normalizedCode = code.trim().toUpperCase();
+  if (!normalizedCode) return null;
+  if (!normalizedCode.includes('/')) {
+    const direct = await getDoc(doc(db, 'gas', normalizedCode));
+    if (direct.exists()) {
+      const device = normalizedDevice({ ...direct.data(), id: direct.id });
+      if (device.deviceCode.toUpperCase() === normalizedCode) return device;
+    }
+  }
+  const matches = await getDocs(query(collection(db, 'gas'), where('deviceCode', '==', normalizedCode)));
+  const match = matches.docs[0];
+  return match ? normalizedDevice({ ...match.data(), id: match.id }) : null;
 }
 
 export async function loanRequest<T>(path: string, body?: unknown): Promise<T> {
@@ -151,8 +170,8 @@ export async function loanRequest<T>(path: string, body?: unknown): Promise<T> {
 
   if (path === '/devices' && body && role === 'admin') {
     const request = body as { deviceId?: unknown; deviceNumber?: unknown; name?: unknown; notes?: unknown; category?: unknown; facultySerialNumber?: unknown; serialNumber?: unknown; photos?: unknown };
-    const requestedId = String(request.deviceId ?? '').trim().toUpperCase();
-    const id = requestedId || doc(collection(db, 'gas')).id.toUpperCase();
+    const deviceCode = String(request.deviceId ?? '').trim().toUpperCase();
+    const id = doc(collection(db, 'gas')).id.toUpperCase();
     const deviceNumber = deviceNumberValue(request.deviceNumber);
     const name = typeof request.name === 'string' ? request.name.trim() : '';
     const notes = typeof request.notes === 'string' ? request.notes.trim() : '';
@@ -165,37 +184,46 @@ export async function loanRequest<T>(path: string, body?: unknown): Promise<T> {
     if (notes.length > 1000) throw new Error('หมายเหตุต้องไม่เกิน 1,000 ตัวอักษร');
     if (facultySerialNumber.length > 100 || serialNumber.length > 100) throw new Error('เลขประจำอุปกรณ์ต้องไม่เกิน 100 ตัวอักษร');
     if (photos.length > 10 || photos.some(photo => !photo || typeof photo.url !== 'string' || !photo.url.startsWith('https://res.cloudinary.com/') || typeof photo.publicId !== 'string' || typeof photo.bytes !== 'number' || typeof photo.uploadedAt !== 'string')) throw new Error('รูปอัลบั้มมีข้อมูลไม่ถูกต้อง');
-    if (requestedId && (requestedId.length > 64 || requestedId.includes('/') || requestedId === '.' || requestedId === '..' || /^__.*__$/.test(requestedId))) {
-      throw new Error('รหัสอุปกรณ์มีรูปแบบที่ Firestore ไม่รองรับ: ห้ามใช้ /, . หรือ .. เพียงอย่างเดียว และต้องไม่เกิน 64 ตัวอักษร');
+    if (!deviceCode) throw new Error('กรุณากรอกรหัสอุปกรณ์');
+    if (deviceCode.length > 64 || /[\u0000-\u001F\u007F]/.test(deviceCode)) throw new Error('รหัสอุปกรณ์ต้องมีความยาวไม่เกิน 64 ตัวอักษร');
+    const existingCodes = await getDocs(collection(db, 'gas'));
+    if (existingCodes.docs.some(item => item.id.toUpperCase() === deviceCode || String(item.data().deviceCode ?? item.id).toUpperCase() === deviceCode)) {
+      throw new Error('รหัสอุปกรณ์นี้ถูกใช้แล้ว');
     }
     await runTransaction(db, async tx => {
       const ref = doc(db, 'gas', id);
       if ((await tx.get(ref)).exists()) throw new Error('รหัส VR นี้มีอยู่แล้ว');
       tx.set(ref, {
-        deviceNumber, name, notes, category, facultySerialNumber, serialNumber, photos,
+        deviceCode, deviceNumber, name, notes, category, facultySerialNumber, serialNumber, photos,
         status: 'good', loanStatus: 'available', activeLoanId: null, pendingLoanId: null,
         createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
       });
     });
-    return { success: true, deviceId: id } as T;
+    return { success: true, deviceId: id, deviceCode } as T;
   }
 
   const detailsMatch = path.match(/^\/devices\/([^/]+)\/details$/);
   if (detailsMatch && body && role === 'admin') {
-    const request = body as { name?: unknown; notes?: unknown; category?: unknown; facultySerialNumber?: unknown; serialNumber?: unknown };
+    const request = body as { deviceCode?: unknown; name?: unknown; notes?: unknown; category?: unknown; facultySerialNumber?: unknown; serialNumber?: unknown };
+    const deviceCode = String(request.deviceCode ?? '').trim().toUpperCase();
     const name = typeof request.name === 'string' ? request.name.trim() : '';
     const notes = typeof request.notes === 'string' ? request.notes.trim() : '';
     const category = String(request.category ?? 'vr');
     const facultySerialNumber = typeof request.facultySerialNumber === 'string' ? request.facultySerialNumber.trim() : '';
     const serialNumber = typeof request.serialNumber === 'string' ? request.serialNumber.trim() : '';
     if (!['vr', 'computer', 'monitor', 'other'].includes(category)) throw new Error('ประเภทอุปกรณ์ไม่ถูกต้อง');
-    if (!name || name.length > 100) throw new Error('กรุณากรอกชื่ออุปกรณ์ไม่เกิน 100 ตัวอักษร');
+    if (!deviceCode || deviceCode.length > 64 || /[\u0000-\u001F\u007F]/.test(deviceCode)) throw new Error('กรุณากรอกรหัสอุปกรณ์ไม่เกิน 64 ตัวอักษร');
+    if (name.length > 100) throw new Error('ชื่ออุปกรณ์ต้องไม่เกิน 100 ตัวอักษร');
     if (notes.length > 1000) throw new Error('หมายเหตุต้องไม่เกิน 1,000 ตัวอักษร');
     if (facultySerialNumber.length > 100 || serialNumber.length > 100) throw new Error('เลขประจำอุปกรณ์ต้องไม่เกิน 100 ตัวอักษร');
     const ref = doc(db, 'gas', decodeURIComponent(detailsMatch[1]).toUpperCase());
+    const existingDevices = await getDocs(collection(db, 'gas'));
+    if (existingDevices.docs.some(item => item.id !== ref.id && (item.id.toUpperCase() === deviceCode || String(item.data().deviceCode ?? item.id).toUpperCase() === deviceCode))) {
+      throw new Error('รหัสอุปกรณ์นี้ถูกใช้แล้ว');
+    }
     await runTransaction(db, async tx => {
       if (!(await tx.get(ref)).exists()) throw new Error('ไม่พบอุปกรณ์นี้');
-      tx.update(ref, { name, notes, category, facultySerialNumber, serialNumber, updatedAt: serverTimestamp() });
+      tx.update(ref, { deviceCode, name, notes, category, facultySerialNumber, serialNumber, updatedAt: serverTimestamp() });
     });
     return { success: true } as T;
   }
@@ -310,17 +338,24 @@ export async function loanRequest<T>(path: string, body?: unknown): Promise<T> {
   }
 
   const returnMatch = path.match(/^\/devices\/([^/]+)\/return$/);
-  if (returnMatch && body === undefined && role === 'admin') {
-    const id = decodeURIComponent(returnMatch[1]).toUpperCase();
+  if ((path === '/devices/return-scan' && body || returnMatch && body === undefined) && role === 'admin') {
+    const scanned = path === '/devices/return-scan'
+      ? String((body as { deviceCode?: unknown }).deviceCode ?? '')
+      : decodeURIComponent(returnMatch![1]);
+    const code = scanned.trim().toUpperCase();
+    const matched = await findDeviceByCode(code);
+    if (!matched) throw new Error('ไม่พบรหัสอุปกรณ์นี้');
+    const id = matched.id;
     const snap = await getDoc(doc(db, 'gas', id));
-    if (!snap.exists()) throw new Error('ไม่พบรหัส VR นี้');
-    if (!snap.data().activeLoanId) {
-      if (snap.data().status === 'borrowed' && snap.data().statusSource === 'admin') {
+    if (!snap.exists()) throw new Error('ไม่พบรหัสอุปกรณ์นี้');
+    const device = snap.data();
+    if (!device.activeLoanId) {
+      if (device.status === 'borrowed' && device.statusSource === 'admin') {
         throw new Error('VR นี้ถูกตั้งสถานะยืมโดยแอดมิน กรุณาเปลี่ยนสถานะจากแดชบอร์ด');
       }
       throw new Error('VR เครื่องนี้ไม่มีรายการยืมที่รอคืน');
     }
-    const loan = await getDoc(doc(db, 'loans', String(snap.data().activeLoanId)));
+    const loan = await getDoc(doc(db, 'loans', String(device.activeLoanId)));
     if (!loan.exists() || loan.data().status !== 'borrowed') throw new Error('รายการยืมไม่ถูกต้อง');
     return { loan: toLoan(loan.id, loan.data()) } as T;
   }
@@ -347,8 +382,11 @@ export async function loanRequest<T>(path: string, body?: unknown): Promise<T> {
 
   if (path === '/loans/borrow' && body) {
     const request = body as { deviceId?: string; selfie?: string };
-    const id = String(request.deviceId ?? '').trim().toUpperCase();
-    if (!/^[A-Z0-9][A-Z0-9_-]{0,63}$/.test(id)) throw new Error('รหัส VR ไม่ถูกต้อง');
+    const code = String(request.deviceId ?? '').trim().toUpperCase();
+    if (!/^[A-Z0-9][A-Z0-9_-]{0,63}$/.test(code)) throw new Error('รหัสอุปกรณ์ไม่ถูกต้อง');
+    const matched = await findDeviceByCode(code);
+    if (!matched) throw new Error('ไม่พบรหัสอุปกรณ์นี้');
+    const id = matched.id;
     const image = request.selfie ?? '';
     if (!/^data:image\/jpeg;base64,[A-Za-z0-9+/]+=*$/.test(image) || image.length > 700000) throw new Error('กรุณาแนบ selfie JPG ขนาดไม่เกิน 500 KB');
     const loanRef = doc(collection(db, 'loans'));
@@ -361,6 +399,7 @@ export async function loanRequest<T>(path: string, body?: unknown): Promise<T> {
       if (device.status !== 'good' || device.activeLoanId || device.pendingLoanId) throw new Error('VR เครื่องนี้ไม่พร้อมให้ยืม หรือมีคำขอรออนุมัติอยู่แล้ว');
       tx.set(loanRef, {
         deviceId: id,
+        deviceCode: code,
         borrowerId: user.uid,
         borrowerName: String(profile.nickname || profile.name || ''),
         status: 'pending_approval',

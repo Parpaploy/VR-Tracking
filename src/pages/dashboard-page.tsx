@@ -60,6 +60,7 @@ export default function DashboardPage() {
   const [categoryChoice, setCategoryChoice] = useState<Record<string, EquipmentCategory>>({});
   const [facultySerialChoice, setFacultySerialChoice] = useState<Record<string, string>>({});
   const [serialChoice, setSerialChoice] = useState<Record<string, string>>({});
+  const [deviceCodeChoice, setDeviceCodeChoice] = useState<Record<string, string>>({});
   const [nameChoice, setNameChoice] = useState<Record<string, string>>({});
   const [notesChoice, setNotesChoice] = useState<Record<string, string>>({});
   const [categoryFilter, setCategoryFilter] = useState<'all' | EquipmentCategory>('vr');
@@ -218,6 +219,7 @@ export default function DashboardPage() {
     setBusy(true); setError('');
     try {
       await loanRequest(`/devices/${encodeURIComponent(device.id)}/details`, {
+        deviceCode: deviceCodeChoice[device.id] ?? device.deviceCode ?? device.id,
         name: nameChoice[device.id] ?? device.name ?? '',
         notes: notesChoice[device.id] ?? device.notes ?? '',
         category: categoryChoice[device.id] ?? device.category ?? 'vr',
@@ -234,7 +236,7 @@ export default function DashboardPage() {
     const result = await Swal.fire({
       icon: 'warning',
       title: 'ลบอุปกรณ์?',
-      text: `ต้องการลบอุปกรณ์ "${device.id}"${device.deviceNumber ? ` เบอร์ ${device.deviceNumber}` : ''} ใช่หรือไม่? ประวัติการยืมเดิมจะยังคงอยู่`,
+      text: `ต้องการลบอุปกรณ์ "${device.deviceCode}"${device.deviceNumber ? ` เบอร์ ${device.deviceNumber}` : ''} ใช่หรือไม่? ประวัติการยืมเดิมจะยังคงอยู่`,
       showCancelButton: true,
       confirmButtonText: 'ลบอุปกรณ์',
       cancelButtonText: 'ยกเลิก',
@@ -272,6 +274,7 @@ export default function DashboardPage() {
       const status = deviceStatus(device);
       const matchText = !term || device.id.toLowerCase().includes(term)
         || (device.deviceNumber ?? '').toLowerCase().includes(term)
+        || device.deviceCode.toLowerCase().includes(term)
         || (device.name ?? '').toLowerCase().includes(term)
         || (device.notes ?? '').toLowerCase().includes(term)
         || (device.facultySerialNumber ?? '').toLowerCase().includes(term)
@@ -347,7 +350,7 @@ export default function DashboardPage() {
           {loans.filter(loan => loan.status === 'pending_approval').map(loan => {
             const device = devices.find(item => item.id === loan.deviceId);
             return <article key={loan.id} className="rounded-xl border border-yellow-200 bg-white p-4 shadow-sm">
-              <div className="flex items-start justify-between gap-3"><div><h3 className="font-bold">{device?.name || `${categoryLabel[device?.category ?? 'vr']} ${device?.deviceNumber || loan.deviceId}`}</h3><p className="text-xs text-slate-500">รหัสอุปกรณ์ {loan.deviceId}</p></div><span className="rounded-full bg-yellow-100 px-2.5 py-1 text-xs font-semibold text-yellow-900">รออนุมัติ</span></div>
+              <div className="flex items-start justify-between gap-3"><div><h3 className="font-bold">{device?.name || `${categoryLabel[device?.category ?? 'vr']} ${device?.deviceNumber || loan.deviceId}`}</h3><p className="text-xs text-slate-500">รหัสอุปกรณ์ {device?.deviceCode || loan.deviceCode || loan.deviceId}</p></div><span className="rounded-full bg-yellow-100 px-2.5 py-1 text-xs font-semibold text-yellow-900">รออนุมัติ</span></div>
               <p className="mt-3 text-sm">ผู้ขอยืม <b>{loan.borrowerName}</b></p>
               <p className="text-xs text-slate-500">ส่งคำขอ {date(loan.requestedAt)}</p>
               <div className="mt-4 flex gap-2"><button type="button" disabled={busy} onClick={() => void viewSelfie(loan)} className="flex-1 rounded-lg border px-3 py-2 text-sm font-semibold text-blue-800 disabled:opacity-50">{selfieLoadingId === loan.id ? 'กำลังโหลดรูป…' : 'ดูรูปแนบ'}</button><button type="button" disabled={busy} onClick={() => void reviewLoan(loan, 'reject')} className="rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 disabled:opacity-50">ปฏิเสธ</button><button type="button" disabled={busy} onClick={() => void reviewLoan(loan, 'approve')} className="rounded-lg bg-emerald-700 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50">อนุมัติ</button></div>
@@ -368,8 +371,8 @@ export default function DashboardPage() {
           <label className="block min-w-0 text-xs font-semibold text-slate-600 lg:col-span-2">ประเภทอุปกรณ์
             <select aria-label="ประเภทอุปกรณ์ใหม่" value={newCategory} onChange={e => setNewCategory(e.target.value as EquipmentCategory)} className="mt-1.5 h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-normal text-slate-900">{Object.entries(categoryLabel).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>
           </label>
-          <label className="block min-w-0 text-xs font-semibold text-slate-600 lg:col-span-2">รหัสอุปกรณ์ <span className="font-normal">(ไม่จำเป็น)</span>
-            <input aria-label="รหัสอุปกรณ์ (ไม่จำเป็น)" maxLength={64} placeholder="เว้นว่างเพื่อสร้างอัตโนมัติ" value={code} onChange={e => setCode(e.target.value.toUpperCase())} className="mt-1.5 h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-normal text-slate-900" />
+          <label className="block min-w-0 text-xs font-semibold text-slate-600 lg:col-span-2">รหัสอุปกรณ์
+            <input aria-label="รหัสอุปกรณ์ใหม่" required maxLength={64} placeholder="กรอกรหัสที่ต้องการ" value={code} onChange={e => setCode(e.target.value.toUpperCase())} className="mt-1.5 h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-normal text-slate-900" />
           </label>
           <label className="block min-w-0 text-xs font-semibold text-slate-600 lg:col-span-3">ชื่ออุปกรณ์
             <input aria-label="ชื่ออุปกรณ์" required maxLength={100} placeholder="เช่น คอมพิวเตอร์ห้อง 1" value={newDeviceName} onChange={e => setNewDeviceName(e.target.value)} className="mt-1.5 h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm font-normal text-slate-900" />
@@ -425,13 +428,13 @@ export default function DashboardPage() {
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <h3 className="break-words text-2xl font-bold">{device.name || device.deviceNumber || categoryLabel[device.category ?? 'vr']}</h3>
-                  <p className="mt-1 break-all font-mono text-xs text-slate-500">{device.id} · {categoryLabel[device.category ?? 'vr']}</p>
-                  {(device.facultySerialNumber || device.serialNumber) && <p className="mt-1 break-words text-xs text-slate-600">{device.facultySerialNumber && <>เลขครุภัณฑ์ {device.facultySerialNumber}</>}{device.facultySerialNumber && device.serialNumber && ' · '}{device.serialNumber && <>Serial {device.serialNumber}</>}</p>}
+                  <p className="mt-1 break-all font-mono text-xs text-slate-500">{device.deviceCode} · {categoryLabel[device.category ?? 'vr']}</p>
+                  {(device.facultySerialNumber || device.serialNumber) && <p className="mt-1 break-words text-xs text-slate-600">{device.facultySerialNumber && <span className="block"><span className="font-normal">เลขครุภัณฑ์ </span><span className="font-semibold">{device.facultySerialNumber}</span></span>}{device.serialNumber && <span className="block"><span className="font-normal">Serial </span><span className="font-semibold">{device.serialNumber}</span></span>}</p>}
                   {device.notes && <p className="mt-1 whitespace-pre-wrap break-words text-sm text-slate-600"><span className="font-semibold">หมายเหตุ:</span> {device.notes}</p>}
                 </div>
                 <div className="flex shrink-0 items-center gap-1">
-                  <span className="rounded-full bg-white/80 px-2.5 py-1 text-xs font-semibold">{deviceLabel(status)}</span>
-                  <button type="button" aria-label={`แก้ไขข้อมูลอุปกรณ์ ${device.deviceNumber || device.id}`} aria-expanded={settingsOpen} aria-controls={`device-settings-${device.id}`} onClick={() => setOpenDeviceId(settingsOpen ? null : device.id)} className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-slate-700"><LuEllipsisVertical aria-hidden="true" size={18} /></button>
+                  <span className="inline-flex h-8 items-center rounded-full bg-white/80 px-2.5 text-xs font-semibold">{deviceLabel(status)}</span>
+                  <button type="button" aria-label={`แก้ไขข้อมูลอุปกรณ์ ${device.deviceNumber || device.deviceCode}`} aria-expanded={settingsOpen} aria-controls={`device-settings-${device.id}`} onClick={() => setOpenDeviceId(settingsOpen ? null : device.id)} className="inline-flex h-8 w-9 items-center justify-center border border-slate-300 bg-white p-0 text-slate-700 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-slate-700"><LuEllipsisVertical aria-hidden="true" size={18} /></button>
                 </div>
               </div>
               {status === 'borrowed' && activeLoan && <p className="mt-3 text-sm">ผู้ยืม <b>{activeLoan.borrowerName}</b><br /><span className="text-slate-600">ยืมเมื่อ {date(activeLoan.borrowedAt)}</span></p>}
@@ -443,8 +446,12 @@ export default function DashboardPage() {
                 {latestReturn.returnedBy && <p className="text-xs text-slate-500">รับคืนโดย {returnedBy?.nickname || returnedBy?.name || 'แอดมิน (ไม่พบชื่อ)'}</p>}
               </div>}
               {settingsOpen && <div id={`device-settings-${device.id}`} className="mt-4 border-t border-black/10 pt-1">
-              <label className="mt-3 block text-xs font-semibold text-slate-700">ชื่ออุปกรณ์ <span className="font-normal text-slate-500">(ข้อความหลักบนการ์ด)</span>
-                <input required maxLength={100} value={nameChoice[device.id] ?? device.name ?? ''} disabled={busy} onChange={e => setNameChoice(current => ({ ...current, [device.id]: e.target.value }))} placeholder="ชื่อเรียกอุปกรณ์" className="mt-1 w-full rounded-lg border border-slate-300 bg-white p-2.5 text-sm disabled:opacity-50" />
+              <label className="mt-3 block text-xs font-semibold text-slate-700">รหัสอุปกรณ์ <span className="font-normal text-slate-500">(ใช้สแกน QR)</span>
+                <input required maxLength={64} value={deviceCodeChoice[device.id] ?? device.deviceCode ?? device.id} disabled={busy} onChange={e => setDeviceCodeChoice(current => ({ ...current, [device.id]: e.target.value.toUpperCase() }))} placeholder="รหัสอุปกรณ์" className="mt-1 w-full rounded-lg border border-slate-300 bg-white p-2.5 text-sm disabled:opacity-50" />
+                <span className="mt-1 block font-normal text-slate-500">กำหนดรหัสได้ตามต้องการ ไม่เกิน 64 ตัวอักษร · ประวัติเดิมยังเชื่อมกับอุปกรณ์นี้</span>
+              </label>
+              <label className="mt-3 block text-xs font-semibold text-slate-700">ชื่ออุปกรณ์ <span className="font-normal text-slate-500">(ถ้ามี)</span>
+                <input maxLength={100} value={nameChoice[device.id] ?? device.name ?? ''} disabled={busy} onChange={e => setNameChoice(current => ({ ...current, [device.id]: e.target.value }))} placeholder="ชื่อเรียกอุปกรณ์" className="mt-1 w-full rounded-lg border border-slate-300 bg-white p-2.5 text-sm disabled:opacity-50" />
               </label>
               <label className="mt-3 block text-xs font-semibold text-slate-700">หมายเหตุ
                 <textarea maxLength={1000} rows={3} value={notesChoice[device.id] ?? device.notes ?? ''} disabled={busy} onChange={e => setNotesChoice(current => ({ ...current, [device.id]: e.target.value }))} placeholder="บันทึกหมายเหตุ" className="mt-1 w-full resize-y rounded-lg border border-slate-300 bg-white p-2.5 text-sm disabled:opacity-50" />
@@ -458,7 +465,7 @@ export default function DashboardPage() {
               <label className="mt-3 block text-xs font-semibold text-slate-700">Serial number
                 <input maxLength={100} value={serialChoice[device.id] ?? device.serialNumber ?? ''} disabled={busy} onChange={e => setSerialChoice(current => ({ ...current, [device.id]: e.target.value }))} placeholder="ยังไม่ระบุ" className="mt-1 w-full rounded-lg border border-slate-300 bg-white p-2.5 text-sm disabled:opacity-50" />
               </label>
-              {(nameChoice[device.id] ?? device.name ?? '') !== (device.name ?? '') || (notesChoice[device.id] ?? device.notes ?? '') !== (device.notes ?? '') || (categoryChoice[device.id] ?? device.category ?? 'vr') !== (device.category ?? 'vr') || (facultySerialChoice[device.id] ?? device.facultySerialNumber ?? '') !== (device.facultySerialNumber ?? '') || (serialChoice[device.id] ?? device.serialNumber ?? '') !== (device.serialNumber ?? '') ? <button type="button" disabled={busy || !(nameChoice[device.id] ?? device.name ?? '').trim()} onClick={() => void saveDeviceDetails(device)} className="mt-2 w-full rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:opacity-40">บันทึกข้อมูลอุปกรณ์</button> : null}
+              {(deviceCodeChoice[device.id] ?? device.deviceCode ?? device.id) !== (device.deviceCode ?? device.id) || (nameChoice[device.id] ?? device.name ?? '') !== (device.name ?? '') || (notesChoice[device.id] ?? device.notes ?? '') !== (device.notes ?? '') || (categoryChoice[device.id] ?? device.category ?? 'vr') !== (device.category ?? 'vr') || (facultySerialChoice[device.id] ?? device.facultySerialNumber ?? '') !== (device.facultySerialNumber ?? '') || (serialChoice[device.id] ?? device.serialNumber ?? '') !== (device.serialNumber ?? '') ? <button type="button" disabled={busy} onClick={() => void saveDeviceDetails(device)} className="mt-2 w-full rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white disabled:opacity-40">บันทึกข้อมูลอุปกรณ์</button> : null}
               <VRPhotos key={device.id} deviceId={device.id} photos={device.photos} onAdded={photo => setDevices(current => current.map(item => item.id === device.id ? { ...item, photos: [...(item.photos ?? []).filter(existing => existing.publicId !== photo.publicId), photo] } : item))} />
               <label className="mt-3 block text-xs font-semibold text-slate-700">เบอร์เครื่อง <span className="font-normal text-slate-500">(เช่น 1)</span>
                 <input maxLength={64} value={numberChoice[device.id] ?? ''} disabled={busy} onChange={e => setNumberChoice(current => ({ ...current, [device.id]: e.target.value }))} placeholder="ยังไม่ระบุเบอร์เครื่อง" className="mt-1 w-full rounded-lg border border-slate-300 bg-white p-2.5 text-sm disabled:opacity-50" />
@@ -500,7 +507,7 @@ export default function DashboardPage() {
           const statusLabel = (status: string) => ({ good: 'พร้อมใช้', damaged: 'ชำรุด', minor_damage: 'ชำรุด', major_damage: 'ชำรุด', borrowed: 'ยืม' }[status] ?? status);
           const actor = users.find(user => user.id === item.performedBy);
           return <tr key={`status-${item.id}`} className="border-b last:border-0 bg-indigo-50/40">
-            <td data-label="รหัสอุปกรณ์" className="p-3 font-mono font-bold">{item.gasId}</td>
+            <td data-label="รหัสอุปกรณ์" className="p-3 font-mono font-bold">{devices.find(device => device.id === item.gasId)?.deviceCode ?? item.gasId}</td>
             <td data-label="เบอร์เครื่อง" className="p-3">{device?.deviceNumber?.trim() || 'ไม่ระบุ'}</td>
             <td data-label="ผู้ใช้" className="p-3">{item.borrowerName || '—'}</td>
             <td data-label="รูป selfie" className="p-3">—</td>
@@ -523,7 +530,7 @@ export default function DashboardPage() {
                 ? `อนุมัติโดย ${operator?.nickname || operator?.name || 'แอดมิน'}`
                 : loan.approvalSource === 'admin' ? 'บันทึกโดยแอดมิน' : '—';
           return <tr key={loan.id} className="border-b last:border-0">
-            <td data-label="รหัสอุปกรณ์" className="p-3 font-mono font-bold">{loan.deviceId}</td>
+            <td data-label="รหัสอุปกรณ์" className="p-3 font-mono font-bold">{devices.find(device => device.id === loan.deviceId)?.deviceCode ?? loan.deviceCode ?? loan.deviceId}</td>
             <td data-label="เบอร์เครื่อง" className="p-3">{deviceNumber || 'ไม่ระบุ'}</td>
             <td data-label="ผู้ใช้" className="p-3">{loan.borrowerName}</td>
             <td data-label="รูป selfie" className="p-3"><button type="button" onClick={() => void viewSelfie(loan)} disabled={selfieLoadingId === loan.id} className="rounded-lg border px-3 py-2 text-xs font-semibold text-blue-800 disabled:opacity-50">{selfieLoadingId === loan.id ? 'กำลังโหลด…' : 'ดูรูป'}</button></td>

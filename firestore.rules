@@ -171,6 +171,9 @@ service cloud.firestore {
 
       allow create: if admin()
         && request.resource.data.status in ['good', 'damaged', 'minor_damage', 'major_damage']
+        && request.resource.data.deviceCode is string
+        && request.resource.data.deviceCode.size() > 0
+        && request.resource.data.deviceCode.size() <= 64
         && (!('deviceNumber' in request.resource.data) || (request.resource.data.deviceNumber is string && request.resource.data.deviceNumber.size() <= 64))
         && (!('activeLoanId' in request.resource.data) || request.resource.data.activeLoanId == null)
         && (!('pendingLoanId' in request.resource.data) || request.resource.data.pendingLoanId == null);
@@ -188,6 +191,24 @@ service cloud.firestore {
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['deviceNumber', 'updatedAt'])
           && request.resource.data.deviceNumber is string
           && request.resource.data.deviceNumber.size() <= 64
+        ) || (
+          admin()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'deviceCode', 'name', 'notes', 'category', 'facultySerialNumber', 'serialNumber', 'updatedAt'
+          ])
+          && request.resource.data.deviceCode is string
+          && request.resource.data.deviceCode.size() > 0
+          && request.resource.data.deviceCode.size() <= 64
+          && request.resource.data.name is string
+          && request.resource.data.name.size() <= 100
+          && request.resource.data.notes is string
+          && request.resource.data.notes.size() <= 1000
+          && request.resource.data.category in ['vr', 'computer', 'monitor', 'other']
+          && request.resource.data.facultySerialNumber is string
+          && request.resource.data.facultySerialNumber.size() <= 100
+          && request.resource.data.serialNumber is string
+          && request.resource.data.serialNumber.size() <= 100
+          && request.resource.data.updatedAt is timestamp
         ) || (
           activeUser()
           && request.resource.data.diff(resource.data).affectedKeys()
