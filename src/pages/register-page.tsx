@@ -96,7 +96,7 @@ export default function RegisterPage() {
         </Link>
         <h1 className="text-2xl font-bold">สร้างบัญชีผู้ใช้</h1>
         <p className="text-sm text-gray-500 mt-2 mb-6">
-          สมัครเพื่อใช้งาน ICAT VR Tracker
+          สมัครเพื่อใช้งาน ICAT Tracker
         </p>
         {success ? (
           <div role="status" className="space-y-4">
@@ -191,7 +191,7 @@ export default function RegisterPage() {
               </label>
               <p className="text-xs text-gray-500">
                 JPG, PNG หรือ WebP ไม่เกิน 20 MB กรุณาใช้ภาพที่อ่านชัด
-                และใส่ลายน้ำ “ใช้สมัคร ICAT VR Tracker เท่านั้น”
+                และใส่ลายน้ำ “ใช้สมัคร ICAT Tracker เท่านั้น”
               </p>
               {preview && (
                 <img

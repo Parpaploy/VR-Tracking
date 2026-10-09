@@ -207,8 +207,13 @@ export async function addVR(
 }
 
 export async function addVRPhoto(deviceId: string, photo: IVRPhoto): Promise<void> {
+  await addVRPhotos(deviceId, [photo]);
+}
+
+export async function addVRPhotos(deviceId: string, photos: IVRPhoto[]): Promise<void> {
+  if (photos.length === 0) return;
   await updateDoc(doc(db, "gas", deviceId), {
-    photos: arrayUnion(photo),
+    photos: arrayUnion(...photos),
     editedAt: serverTimestamp(),
   });
 }

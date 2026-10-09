@@ -10,6 +10,7 @@ import { useAuth } from "../hooks/use-auth";
 
 export default function AppHeader({ admin = false }: { admin?: boolean }) {
   const { session, logout } = useAuth();
+  const isAdmin = admin || session?.role === "admin";
   const navigate = useNavigate();
   async function signOut() {
     const result = await Swal.fire({
@@ -37,22 +38,25 @@ export default function AppHeader({ admin = false }: { admin?: boolean }) {
   return (
     <header className="app-header">
       <div className="header-inner">
-        <NavLink to={admin ? "/admin" : "/private"} className="brand">
+        <NavLink to={isAdmin ? "/admin" : "/private"} className="brand">
           <span className="brand-icon">
             <img src="/vr.png" alt="" />
           </span>
           <span>
-            ICAT VR Tracker<small>ระบบยืม–คืนอุปกรณ์ VR</small>
+            ICAT Tracker<small>ระบบยืม–คืนอุปกรณ์</small>
           </span>
         </NavLink>
         <nav className="app-nav" aria-label="เมนูหลัก">
-          {admin ? (
+          {isAdmin ? (
             <>
               <NavLink end to="/admin">
                 <LuLayoutDashboard /> ภาพรวมอุปกรณ์
               </NavLink>
+              <NavLink to="/private">
+                <LuScanLine /> ยืมอุปกรณ์และรายการของฉัน
+              </NavLink>
               <NavLink to="/admin/return">
-                <LuScanLine /> รับคืน VR
+                <LuScanLine /> รับคืนอุปกรณ์
               </NavLink>
               <NavLink to="/admin/user-management">
                 <LuUsers /> จัดการผู้ใช้
@@ -60,7 +64,7 @@ export default function AppHeader({ admin = false }: { admin?: boolean }) {
             </>
           ) : (
             <NavLink end to="/private">
-              <LuScanLine /> ยืม VR และรายการของฉัน
+              <LuScanLine /> ยืมอุปกรณ์และรายการของฉัน
             </NavLink>
           )}
         </nav>
@@ -70,7 +74,7 @@ export default function AppHeader({ admin = false }: { admin?: boolean }) {
           </span>
           <div className="account-name">
             <strong>{session?.name}</strong>
-            <small>{admin ? "ผู้ดูแลระบบ" : "สมาชิก"}</small>
+            <small>{isAdmin ? "ผู้ดูแลระบบ" : "สมาชิก"}</small>
           </div>
           <button
             type="button"

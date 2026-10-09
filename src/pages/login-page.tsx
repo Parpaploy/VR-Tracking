@@ -33,13 +33,13 @@ export default function LoginPage() {
             <img src="/vr.svg" alt="" />
           </span>
           <div className="flex flex-col justify-center items-start">
-            <p className="-mb-1.5">ICAT VR Tracker</p>
-            <p>ระบบยืม–คืนอุปกรณ์ VR</p>
+            <p className="-mb-1.5">ICAT Tracker</p>
+            <p>ระบบยืม–คืนอุปกรณ์</p>
           </div>
         </div>
 
         <p className="story-description">
-          ยืมอุปกรณ์ VR ได้ง่าย ๆ สแกน แนบรูป และติดตามคำขอได้ในที่เดียว
+          ยืมอุปกรณ์ได้ง่าย ๆ สแกน แนบรูป และติดตามคำขอได้ในที่เดียว
         </p>
         <div className="auth-graphic" aria-hidden="true">
           <img src="/vr-nobg.svg" alt="" />

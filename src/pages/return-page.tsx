@@ -57,12 +57,12 @@ export default function ReturnPage() {
     finally { lock.current = false; setBusy(false); }
   }
   return <main className="return-page">
-    <header className="page-heading"><h1>รับคืนอุปกรณ์ VR</h1><p>สแกน QR แล้วตรวจสอบผู้ยืมก่อนยืนยันรับคืน</p></header>
+    <header className="page-heading"><h1>รับคืนอุปกรณ์</h1><p>สแกน QR แล้วตรวจสอบผู้ยืมก่อนยืนยันรับคืน</p></header>
     <div className="surface space-y-5">{!scanning && !loan && <div className="scan-illustration" aria-hidden="true"><LuScanLine /></div>}
     {scanning ? <><Camera onScan={code => void scanned(code)} onError={msg => { setError(msg); setScanning(false); }} /><button onClick={() => setScanning(false)} className="border rounded-xl p-3 w-full">หยุดกล้อง</button></> : <button disabled={busy} onClick={() => { setLoan(null); setError(''); setMessage(''); setScanning(true); }} className="bg-black text-white p-4 rounded-xl w-full disabled:opacity-40">เปิดกล้องสแกน QR</button>}
     {busy && <p role="status">กำลังดำเนินการ...</p>}
     {error && <p role="alert" className="text-red-600">{error}</p>}{message && <p role="status" className="text-green-700">{message}</p>}
-    {loan && <section className="border rounded-xl p-4 space-y-3"><h2 className="font-mono text-xl font-bold">{loan.deviceId}</h2><p>ผู้ยืม: {loan.borrowerName}</p><p>ยืมเมื่อ: {loan.borrowedAt ? new Date(loan.borrowedAt).toLocaleString('th-TH') : '-'}</p><button disabled={busy} onClick={() => void confirm()} className="bg-green-700 text-white p-3 rounded-xl w-full disabled:opacity-40">ยืนยันว่าได้รับ VR คืนแล้ว</button></section>}
+    {loan && <section className="border rounded-xl p-4 space-y-3"><h2 className="font-mono text-xl font-bold">{loan.deviceId}</h2><p>ผู้ยืม: {loan.borrowerName}</p><p>ยืมเมื่อ: {loan.borrowedAt ? new Date(loan.borrowedAt).toLocaleString('th-TH') : '-'}</p><button disabled={busy} onClick={() => void confirm()} className="bg-green-700 text-white p-3 rounded-xl w-full disabled:opacity-40">ยืนยันว่าได้รับอุปกรณ์คืนแล้ว</button></section>}
     </div>
   </main>;
 }

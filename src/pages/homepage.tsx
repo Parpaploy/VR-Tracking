@@ -1,7 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { Html5Qrcode } from 'html5-qrcode';
-import { Navigate } from 'react-router-dom';
-import { useAuth } from '../hooks/use-auth';
 import { compressPhoto } from '../lib/cloudinary';
 import { asDataUrl, loanRequest } from '../lib/loans.services';
 import type { Loan } from '../lib/loans.services';
@@ -42,7 +40,6 @@ function QRScanner({ onScan, onError }: { onScan: (code: string) => void; onErro
 }
 
 export default function Homepage() {
-  const { session } = useAuth();
   const [code, setCode] = useState('');
   const [scanning, setScanning] = useState(false);
   const [photo, setPhoto] = useState<Blob | null>(null);
@@ -64,7 +61,6 @@ export default function Homepage() {
     const url = URL.createObjectURL(photo); setPreview(url);
     return () => URL.revokeObjectURL(url);
   }, [photo]);
-  if (session?.role === 'admin') return <Navigate to="/admin" replace />;
   async function choose(file?: File) {
     setPhoto(null); setPreview(''); setError(''); setMessage('');
     if (!file) return;
@@ -75,7 +71,7 @@ export default function Homepage() {
   function acceptScan(value: string) {
     const scanned = value.trim().toUpperCase();
     if (!/^[A-Z0-9][A-Z0-9_-]{0,63}$/.test(scanned)) {
-      setError('QR นี้ไม่ใช่รหัส VR กรุณาสแกน QR บนอุปกรณ์');
+      setError('QR นี้ไม่ใช่รหัสอุปกรณ์ กรุณาสแกน QR บนอุปกรณ์');
       return;
     }
     setCode(scanned); setError(''); setMessage(`สแกนรหัส ${scanned} แล้ว ตรวจสอบรหัสและแนบ selfie เพื่อยืม`);
@@ -83,33 +79,33 @@ export default function Homepage() {
   async function borrow(e: React.FormEvent) {
     e.preventDefault();
     if (lock.current) return;
-    if (!code) return setError('กรุณาสแกน QR ของ VR ก่อน');
-    if (!photo) return setError('กรุณาแนบรูป selfie คู่กับ VR');
+    if (!code) return setError('กรุณาสแกน QR ของอุปกรณ์ก่อน');
+    if (!photo) return setError('กรุณาแนบรูป selfie คู่กับอุปกรณ์');
     lock.current = true; setBusy(true); setError(''); setMessage('');
     try {
       await loanRequest('/loans/borrow', { deviceId: code, selfie: await asDataUrl(photo) });
-      setMessage(`ส่งคำขอยืม ${code} แล้ว กรุณารอแอดมินอนุมัติก่อนนำ VR ไปใช้งาน`);
+      setMessage(`ส่งคำขอยืม ${code} แล้ว กรุณารอแอดมินอนุมัติก่อนนำอุปกรณ์ไปใช้งาน`);
       setCode(''); setPhoto(null); setPreview(''); setScanning(false); if (input.current) input.current.value = ''; setRefresh(v => v + 1);
     } catch (err) { setError((err as Error).message); }
     finally { lock.current = false; setBusy(false); }
   }
   return <main className="borrow-page">
-    <header className="page-heading"><h1>เริ่มต้นใช้งาน VR</h1><p>สแกนอุปกรณ์ แนบรูป แล้วส่งคำขอให้แอดมินอนุมัติ</p></header>
+    <header className="page-heading"><h1>ยืมอุปกรณ์</h1><p>สแกน QR ของอุปกรณ์ แนบรูป แล้วส่งคำขอให้แอดมินอนุมัติ</p></header>
     <div className="borrow-layout"><div className="surface">
     <form onSubmit={borrow} className="space-y-5">
       <fieldset disabled={busy} className="space-y-4">
         <section className="space-y-2">
-          <p className="step-label"><span>1</span> สแกน QR บนอุปกรณ์ VR</p>
+          <p className="step-label"><span>1</span> สแกน QR บนอุปกรณ์</p>
           {scanning ? <>
             <QRScanner onScan={value => { setScanning(false); acceptScan(value); }} onError={msg => { setError(msg); setScanning(false); }} />
             <button type="button" onClick={() => setScanning(false)} className="w-full border rounded-xl p-3">ปิดกล้อง</button>
           </> : <button type="button" onClick={() => { setError(''); setMessage(''); setScanning(true); }} className="w-full bg-black text-white rounded-xl p-3">{code ? 'สแกน QR ใหม่' : 'เปิดกล้องสแกน QR'}</button>}
-          {code && <p role="status" className="rounded-lg bg-green-50 p-3">รหัส VR ที่สแกนได้: <b>{code}</b></p>}
+          {code && <p role="status" className="rounded-lg bg-green-50 p-3">รหัสอุปกรณ์ที่สแกนได้: <b>{code}</b></p>}
         </section>
-        <label className="block"><span className="step-label"><span>2</span> แนบรูป selfie คู่กับ VR</span><input ref={input} required type="file" accept="image/jpeg,image/png,image/webp" onChange={e => void choose(e.target.files?.[0])} className="block w-full mt-2" /></label>
-        <p className="text-sm text-gray-500">ให้เห็นใบหน้าผู้ยืมและอุปกรณ์ VR ในภาพเดียวกัน เลือกรูปหรือถ่ายภาพจากโทรศัพท์ได้</p>
-        {preview && <img src={preview} alt="ตัวอย่าง selfie คู่กับ VR" className="rounded-xl max-h-64 w-full object-contain" />}
-        <button disabled={!photo || !code} className="w-full bg-black text-white p-3 rounded-xl disabled:opacity-40">{busy ? 'กำลังดำเนินการ...' : 'ส่งคำขอยืม VR'}</button>
+        <label className="block"><span className="step-label"><span>2</span> แนบรูป selfie คู่กับอุปกรณ์</span><input ref={input} required type="file" accept="image/jpeg,image/png,image/webp" onChange={e => void choose(e.target.files?.[0])} className="block w-full mt-2" /></label>
+        <p className="text-sm text-gray-500">ให้เห็นใบหน้าผู้ยืมและอุปกรณ์ในภาพเดียวกัน เลือกรูปหรือถ่ายภาพจากโทรศัพท์ได้</p>
+        {preview && <img src={preview} alt="ตัวอย่าง selfie คู่กับอุปกรณ์" className="rounded-xl max-h-64 w-full object-contain" />}
+        <button disabled={!photo || !code} className="w-full bg-black text-white p-3 rounded-xl disabled:opacity-40">{busy ? 'กำลังดำเนินการ...' : 'ส่งคำขอยืมอุปกรณ์'}</button>
       </fieldset>
     </form>
     {error && <p role="alert" className="text-red-600">{error}</p>}

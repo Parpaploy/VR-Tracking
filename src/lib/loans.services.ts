@@ -9,6 +9,7 @@ import {
   where,
 } from 'firebase/firestore';
 import { auth, authReady, db } from './firebase';
+import type { IVRPhoto } from '../interfaces/data.interface';
 
 export type LoanStatus = 'pending_approval' | 'borrowed' | 'returned' | 'rejected';
 export type DeviceStatus = 'good' | 'damaged' | 'pending_approval' | 'borrowed' | 'minor_damage' | 'major_damage';
@@ -30,6 +31,12 @@ export interface Loan {
 }
 export interface Device {
   id: string;
+  name?: string;
+  notes?: string;
+  category?: 'vr' | 'computer' | 'monitor' | 'other';
+  facultySerialNumber?: string;
+  serialNumber?: string;
+  photos?: { url: string; publicId: string; bytes: number; uploadedAt: string }[];
   deviceNumber?: string;
   status: DeviceStatus;
   loanStatus?: string;
@@ -87,10 +94,15 @@ export function normalizedDevice(data: Record<string, unknown> & { id: string })
   const status = String(data.status ?? 'good') as DeviceStatus;
   const activeLoanId = typeof data.activeLoanId === 'string' ? data.activeLoanId : null;
   const pendingLoanId = typeof data.pendingLoanId === 'string' ? data.pendingLoanId : null;
+  const deviceNumber = typeof data.deviceNumber === 'string'
+    ? data.deviceNumber
+    : typeof data.deviceNumber === 'number' && Number.isFinite(data.deviceNumber)
+      ? String(data.deviceNumber)
+      : '';
   return {
     ...data,
     id: data.id,
-    deviceNumber: typeof data.deviceNumber === 'string' ? data.deviceNumber : '',
+    deviceNumber,
     status,
     activeLoanId,
     pendingLoanId,
@@ -111,9 +123,7 @@ export async function loanRequest<T>(path: string, body?: unknown): Promise<T> {
   const role = profile.role === 'admin' ? 'admin' : 'user';
 
   if (path === '/loans' && body === undefined) {
-    const loanQuery = role === 'admin'
-      ? query(collection(db, 'loans'))
-      : query(collection(db, 'loans'), where('borrowerId', '==', user.uid));
+    const loanQuery = query(collection(db, 'loans'), where('borrowerId', '==', user.uid));
     const snap = await getDocs(loanQuery);
     const loans = snap.docs.map(item => toLoan(item.id, item.data()));
     loans.sort((a, b) => (b.requestedAt ?? '').localeCompare(a.requestedAt ?? ''));
@@ -140,17 +150,52 @@ export async function loanRequest<T>(path: string, body?: unknown): Promise<T> {
   }
 
   if (path === '/devices' && body && role === 'admin') {
-    const id = String((body as { deviceId?: unknown }).deviceId ?? '').trim().toUpperCase();
-    const deviceNumber = deviceNumberValue((body as { deviceNumber?: unknown }).deviceNumber);
-    if (!/^[A-Z0-9][A-Z0-9_-]{0,63}$/.test(id)) throw new Error('รหัส VR ไม่ถูกต้อง');
+    const request = body as { deviceId?: unknown; deviceNumber?: unknown; name?: unknown; notes?: unknown; category?: unknown; facultySerialNumber?: unknown; serialNumber?: unknown; photos?: unknown };
+    const requestedId = String(request.deviceId ?? '').trim().toUpperCase();
+    const id = requestedId || doc(collection(db, 'gas')).id.toUpperCase();
+    const deviceNumber = deviceNumberValue(request.deviceNumber);
+    const name = typeof request.name === 'string' ? request.name.trim() : '';
+    const notes = typeof request.notes === 'string' ? request.notes.trim() : '';
+    const category = ['vr', 'computer', 'monitor', 'other'].includes(String(request.category)) ? String(request.category) : 'vr';
+    const facultySerialNumber = typeof request.facultySerialNumber === 'string' ? request.facultySerialNumber.trim() : '';
+    const serialNumber = typeof request.serialNumber === 'string' ? request.serialNumber.trim() : '';
+    if (request.photos !== undefined && !Array.isArray(request.photos)) throw new Error('ข้อมูลรูปอัลบั้มไม่ถูกต้อง');
+    const photos = (request.photos ?? []) as IVRPhoto[];
+    if (!name || name.length > 100) throw new Error('กรุณากรอกชื่ออุปกรณ์ไม่เกิน 100 ตัวอักษร');
+    if (notes.length > 1000) throw new Error('หมายเหตุต้องไม่เกิน 1,000 ตัวอักษร');
+    if (facultySerialNumber.length > 100 || serialNumber.length > 100) throw new Error('เลขประจำอุปกรณ์ต้องไม่เกิน 100 ตัวอักษร');
+    if (photos.length > 10 || photos.some(photo => !photo || typeof photo.url !== 'string' || !photo.url.startsWith('https://res.cloudinary.com/') || typeof photo.publicId !== 'string' || typeof photo.bytes !== 'number' || typeof photo.uploadedAt !== 'string')) throw new Error('รูปอัลบั้มมีข้อมูลไม่ถูกต้อง');
+    if (requestedId && (requestedId.length > 64 || requestedId.includes('/') || requestedId === '.' || requestedId === '..' || /^__.*__$/.test(requestedId))) {
+      throw new Error('รหัสอุปกรณ์มีรูปแบบที่ Firestore ไม่รองรับ: ห้ามใช้ /, . หรือ .. เพียงอย่างเดียว และต้องไม่เกิน 64 ตัวอักษร');
+    }
     await runTransaction(db, async tx => {
       const ref = doc(db, 'gas', id);
       if ((await tx.get(ref)).exists()) throw new Error('รหัส VR นี้มีอยู่แล้ว');
       tx.set(ref, {
-        deviceNumber,
+        deviceNumber, name, notes, category, facultySerialNumber, serialNumber, photos,
         status: 'good', loanStatus: 'available', activeLoanId: null, pendingLoanId: null,
         createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
       });
+    });
+    return { success: true, deviceId: id } as T;
+  }
+
+  const detailsMatch = path.match(/^\/devices\/([^/]+)\/details$/);
+  if (detailsMatch && body && role === 'admin') {
+    const request = body as { name?: unknown; notes?: unknown; category?: unknown; facultySerialNumber?: unknown; serialNumber?: unknown };
+    const name = typeof request.name === 'string' ? request.name.trim() : '';
+    const notes = typeof request.notes === 'string' ? request.notes.trim() : '';
+    const category = String(request.category ?? 'vr');
+    const facultySerialNumber = typeof request.facultySerialNumber === 'string' ? request.facultySerialNumber.trim() : '';
+    const serialNumber = typeof request.serialNumber === 'string' ? request.serialNumber.trim() : '';
+    if (!['vr', 'computer', 'monitor', 'other'].includes(category)) throw new Error('ประเภทอุปกรณ์ไม่ถูกต้อง');
+    if (!name || name.length > 100) throw new Error('กรุณากรอกชื่ออุปกรณ์ไม่เกิน 100 ตัวอักษร');
+    if (notes.length > 1000) throw new Error('หมายเหตุต้องไม่เกิน 1,000 ตัวอักษร');
+    if (facultySerialNumber.length > 100 || serialNumber.length > 100) throw new Error('เลขประจำอุปกรณ์ต้องไม่เกิน 100 ตัวอักษร');
+    const ref = doc(db, 'gas', decodeURIComponent(detailsMatch[1]).toUpperCase());
+    await runTransaction(db, async tx => {
+      if (!(await tx.get(ref)).exists()) throw new Error('ไม่พบอุปกรณ์นี้');
+      tx.update(ref, { name, notes, category, facultySerialNumber, serialNumber, updatedAt: serverTimestamp() });
     });
     return { success: true } as T;
   }
@@ -301,7 +346,6 @@ export async function loanRequest<T>(path: string, body?: unknown): Promise<T> {
   }
 
   if (path === '/loans/borrow' && body) {
-    if (role !== 'user') throw new Error('การยืมสำหรับบัญชี user เท่านั้น');
     const request = body as { deviceId?: string; selfie?: string };
     const id = String(request.deviceId ?? '').trim().toUpperCase();
     if (!/^[A-Z0-9][A-Z0-9_-]{0,63}$/.test(id)) throw new Error('รหัส VR ไม่ถูกต้อง');

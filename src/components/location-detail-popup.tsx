@@ -78,7 +78,7 @@ export const LocationDetailPopup = ({
 
         <div className="flex flex-col gap-2">
           {modalDevices.length === 0 ? (
-            <p className="text-center text-black/20 py-4">ไม่มีอุปกรณ์ VR</p>
+            <p className="text-center text-black/20 py-4">ไม่มีอุปกรณ์</p>
           ) : (
             modalDevices.map((g) => (
               <div

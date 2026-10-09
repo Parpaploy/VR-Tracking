@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "site": "vr-tracking-a8847",
     "public": "dist/public",
     "ignore": [
       "firebase.json",

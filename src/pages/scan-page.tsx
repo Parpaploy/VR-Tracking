@@ -158,7 +158,7 @@ export default function VRScanPage() {
         lockedRef.current = true;
         lastScannedRef.current = decodedText;
 
-        setMessage("กำลังโหลดข้อมูลอุปกรณ์ VR...");
+        setMessage("กำลังโหลดข้อมูลอุปกรณ์...");
         await loadVRDetail(decodedText);
         setMessage(null);
 
@@ -196,7 +196,7 @@ export default function VRScanPage() {
   return (
     <main className="max-w-107.5 mx-auto w-full h-full p-4 bg-white flex flex-col gap-1 overflow-hidden">
       <h1 className="text-[18px] font-bold text-center text-black/70">
-        สแกน QR เพื่อดูข้อมูลอุปกรณ์ VR
+        สแกน QR เพื่อดูข้อมูลอุปกรณ์
       </h1>
       <div
         id="qr-reader"
@@ -216,7 +216,7 @@ export default function VRScanPage() {
         <div className="fixed inset-0 bg-black/40 flex items-end justify-center z-50">
           <div className="bg-white w-full max-w-md rounded-t-[20px] p-6 shadow-xl flex flex-col gap-4 max-h-[90svh] overflow-y-auto">
             <div className="flex items-center justify-between">
-              <h2 className="text-[20px] font-bold">ข้อมูลอุปกรณ์ VR</h2>
+              <h2 className="text-[20px] font-bold">ข้อมูลอุปกรณ์</h2>
               <button
                 onClick={handleClosePopup}
                 className="border border-black/10 rounded-full p-2"
@@ -231,14 +231,14 @@ export default function VRScanPage() {
               </div>
             ) : !vr ? (
               <div className="py-10 text-center text-red-400">
-                ไม่พบข้อมูลอุปกรณ์ VRนี้
+                ไม่พบข้อมูลอุปกรณ์นี้
               </div>
             ) : (
               <>
                 <VRPhotos deviceId={vr.id} photos={vr.photos} />
                 <div className="space-y-3">
                   <div className="flex justify-between items-center border-b pb-2">
-                    <span className="text-gray-500">รหัสอุปกรณ์ VR</span>
+                    <span className="text-gray-500">รหัสอุปกรณ์</span>
                     <span className="font-mono font-bold">{vr.id}</span>
                   </div>
                   <div className="flex justify-between items-center border-b pb-2">
@@ -275,7 +275,7 @@ export default function VRScanPage() {
                     <p className="font-bold text-[16px]">ประวัติล่าสุด</p>
                     {lastTx.eventType === "status_change" ? <>
                       <div className="flex justify-between gap-3"><span className="text-gray-500">เปลี่ยนสถานะ</span><span>{STATUS_LABEL[lastTx.fromStatus as keyof typeof STATUS_LABEL] ?? lastTx.fromStatus ?? "-"} → {STATUS_LABEL[lastTx.toStatus as keyof typeof STATUS_LABEL] ?? lastTx.toStatus ?? "-"}</span></div>
-                      {lastTx.toStatus === "borrowed" && <div className="flex justify-between gap-3"><span className="text-gray-500">ผู้ถือ VR</span><span>{lastTx.borrowerName || "ไม่ระบุผู้ยืม"}</span></div>}
+                      {lastTx.toStatus === "borrowed" && <div className="flex justify-between gap-3"><span className="text-gray-500">ผู้ถืออุปกรณ์</span><span>{lastTx.borrowerName || "ไม่ระบุผู้ยืม"}</span></div>}
                       <div className="flex justify-between gap-3"><span className="text-gray-500">แหล่งที่มา</span><span>แอดมินตั้งสถานะ</span></div>
                     </> : <>
                     <div className="flex justify-between">

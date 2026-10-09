@@ -128,7 +128,6 @@ service cloud.firestore {
         || (activeUser() && resource.data.borrowerId == request.auth.uid);
 
       allow create: if activeUser()
-        && get(userPath(request.auth.uid)).data.role == 'user'
         && request.resource.data.borrowerId == request.auth.uid
         && request.resource.data.status == 'pending_approval'
         && request.resource.data.returnedAt == null
@@ -178,12 +177,19 @@ service cloud.firestore {
 
       allow update: if (
           admin()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['photos', 'editedAt'])
+          && request.resource.data.photos is list
+          && request.resource.data.photos.size() <= 500
+          && request.resource.data.editedAt is timestamp
+          && (!('photos' in resource.data)
+            || request.resource.data.photos.toSet().hasAll(resource.data.photos.toSet()))
+        ) || (
+          admin()
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['deviceNumber', 'updatedAt'])
           && request.resource.data.deviceNumber is string
           && request.resource.data.deviceNumber.size() <= 64
         ) || (
           activeUser()
-          && get(userPath(request.auth.uid)).data.role == 'user'
           && request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly([
               'status', 'loanStatus', 'activeLoanId', 'pendingLoanId',
